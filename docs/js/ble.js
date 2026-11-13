@@ -1,15 +1,18 @@
 /* =====================================================================
-   HARALD'S QUEST — WEB BLUETOOTH
-   Must match firmware/rune/rune.ino exactly. Do not change these.
+   HARALD'S QUEST — WEB BLUETOOTH ("press the rune" mode)
+   The phone connects to a rune once and STAYS connected. When a visitor
+   presses the physical rune, it notifies "1" / "2" / "3" ("0" = idle,
+   ignored). Must match firmware/rune/rune.ino. Do not change the UUIDs.
    ===================================================================== */
 
 const RUNE_SERVICE_UUID = "7a1e0001-5c1d-4b6a-9f2e-6a72756e6500";
-const RUNE_ID_CHAR_UUID = "7a1e0002-5c1d-4b6a-9f2e-6a72756e6500";  // phone READS "1" / "2" / "3"
-const RUNE_LED_CHAR_UUID = "7a1e0003-5c1d-4b6a-9f2e-6a72756e6500"; // phone WRITES one character
+const RUNE_ID_CHAR_UUID = "7a1e0002-5c1d-4b6a-9f2e-6a72756e6500";     // rune number; notifies on press (older firmware)
+const RUNE_LED_CHAR_UUID = "7a1e0003-5c1d-4b6a-9f2e-6a72756e6500";    // phone WRITES one character
+const RUNE_BUTTON_CHAR_UUID = "7a1e0004-5c1d-4b6a-9f2e-6a72756e6500"; // button press notifications (if present)
 const RUNE_NAME_PREFIX = "RUNE_";
 
-const LED_IDLE = "0";       // short flash every 2 s
-const LED_COLLECTED = "1";  // solid on
+const LED_IDLE = "0";       // idle
+const LED_COLLECTED = "1";  // solid on (collected)
 const LED_WRONG = "2";      // fast blink, then idle
 
 const RuneBLE = (function () {
@@ -17,27 +20,57 @@ const RuneBLE = (function () {
     return !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
   }
 
-  /* Opens the Bluetooth picker, connects and reads the rune ID.
-     onStage("searching" | "connecting") lets the UI update the button.
-     Returns { id, device, ledChar }. Throws on cancel or failure
-     (the device is disconnected before throwing). */
-  async function scan(onStage) {
-    onStage && onStage("searching");
+  function canNotify(ch) {
+    return !!(ch && ch.properties && (ch.properties.notify || ch.properties.indicate));
+  }
+
+  async function findPressCharacteristic(service) {
+    // Prefer the dedicated button characteristic, fall back to the ID one.
+    const uuids = [RUNE_BUTTON_CHAR_UUID, RUNE_ID_CHAR_UUID];
+    for (let i = 0; i < uuids.length; i++) {
+      try {
+        const ch = await service.getCharacteristic(uuids[i]);
+        if (canNotify(ch)) return ch;
+      } catch (err) { /* not on this firmware */ }
+    }
+    return null;
+  }
+
+  /* Opens the Bluetooth picker, connects and starts listening for presses.
+     handlers:
+       onStage("searching" | "connecting")
+       onPress(id, conn)   — called with 1/2/3 each time the rune is pressed
+       onDisconnect(conn)  — called if the connection drops
+     Returns conn = { device, name, ledChar, pressChar }.
+     Throws on cancel or failure (and disconnects first). */
+  async function connect(handlers) {
+    const h = handlers || {};
+    h.onStage && h.onStage("searching");
     const device = await navigator.bluetooth.requestDevice({
       filters: [{ namePrefix: RUNE_NAME_PREFIX }],
       optionalServices: [RUNE_SERVICE_UUID]
     });
-    onStage && onStage("connecting");
+    h.onStage && h.onStage("connecting");
     try {
       const server = await device.gatt.connect();
       const service = await server.getPrimaryService(RUNE_SERVICE_UUID);
-      const idChar = await service.getCharacteristic(RUNE_ID_CHAR_UUID);
       const ledChar = await service.getCharacteristic(RUNE_LED_CHAR_UUID);
-      const value = await idChar.readValue();
-      const text = new TextDecoder().decode(value).trim();
-      const id = parseInt(text, 10);
-      if (!id) throw new Error("Rune sent an unknown ID: \"" + text + "\"");
-      return { id: id, device: device, ledChar: ledChar };
+      const pressChar = await findPressCharacteristic(service);
+      if (!pressChar) throw new Error("This rune does not send button presses. Check its firmware.");
+
+      const conn = { device: device, name: device.name || "Rune", ledChar: ledChar, pressChar: pressChar };
+
+      pressChar.addEventListener("characteristicvaluechanged", function (e) {
+        const text = new TextDecoder().decode(e.target.value).trim();
+        const id = parseInt(text, 10);
+        if (id >= 1) h.onPress && h.onPress(id, conn); // "0" = idle → ignore
+      });
+      await pressChar.startNotifications();
+
+      device.addEventListener("gattserverdisconnected", function () {
+        h.onDisconnect && h.onDisconnect(conn);
+      });
+      return conn;
     } catch (err) {
       disconnect({ device: device });
       throw err;
@@ -56,14 +89,17 @@ const RuneBLE = (function () {
     }
   }
 
-  /* Always call after handling a rune so it is free for the next visitor. */
+  function isConnected(conn) {
+    return !!(conn && conn.device && conn.device.gatt && conn.device.gatt.connected);
+  }
+
   function disconnect(conn) {
     try {
-      if (conn && conn.device && conn.device.gatt && conn.device.gatt.connected) conn.device.gatt.disconnect();
+      if (isConnected(conn)) conn.device.gatt.disconnect();
     } catch (err) {
       console.warn("Disconnect failed", err);
     }
   }
 
-  return { isSupported: isSupported, scan: scan, writeLed: writeLed, disconnect: disconnect };
+  return { isSupported: isSupported, connect: connect, writeLed: writeLed, isConnected: isConnected, disconnect: disconnect };
 })();
