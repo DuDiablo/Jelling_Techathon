@@ -225,9 +225,10 @@
         <button class="btn btn--primary btn--scan" type="button" id="scan-btn" data-action="scan">
           <svg class="btn__icon btn__icon--scan" aria-hidden="true"><use href="#icon-scan"/></svg>
           <svg class="btn__icon btn__icon--spin" aria-hidden="true"><use href="#icon-spinner"/></svg>
-          <span class="btn__text" id="scan-text">Scan rune</span>
+          <span class="btn__text" id="scan-text">Connect rune</span>
         </button>
         <p class="status" id="status" aria-live="polite"></p>
+        <p class="label connected" id="connected" aria-live="polite" hidden></p>
         <div class="debug" id="debug" hidden>
           <p class="label">Debug</p>
           <div class="debug__row">
@@ -346,7 +347,7 @@
         <details class="howto">
           <summary>How it works <svg aria-hidden="true"><use href="#icon-chevron"/></svg></summary>
           <div class="howto__body">
-            <p><strong>Bluetooth (Android, Chrome):</strong> stand next to a rune and tap <em>Scan rune</em>. Pick the rune in the list. Your phone hears its story and the rune lights up.</p>
+            <p><strong>Bluetooth (Android, Chrome):</strong> tap <em>Connect rune</em> and pick the rune in the list. Your phone stays connected. Now press the rune: your phone tells its story and the rune lights up.</p>
             <p><strong>NFC (iPhone and others):</strong> hold your phone against the rune. A page opens with a <em>Hear rune</em> button.</p>
             <p>Find the runes in order. Each one unlocks the next.</p>
           </div>

@@ -207,11 +207,49 @@
     } else {
       btn.classList.remove("is-busy");
       btn.removeAttribute("aria-busy");
-      text.textContent = "Scan rune";
+      text.textContent = connections.size ? "Connect another rune" : "Connect rune";
     }
   }
 
   const NO_BLE_MSG = "Use Chrome on Android, or tap the rune's NFC tag.";
+
+  /* ---------------- "Press the rune" connections ----------------
+     The phone connects to each rune once and stays connected.
+     Pressing the physical rune sends its number → handleRune(). */
+  const connections = new Map(); // device.id → conn
+  const lastPress = {};          // rune id → time, to ignore double notifications
+  const PRESS_DEBOUNCE_MS = 1500;
+
+  function runeForName(name) {
+    const n = parseInt(String(name || "").replace(RUNE_NAME_PREFIX, ""), 10);
+    return RUNES.find(function (r) { return r.id === n; }) || null;
+  }
+
+  function renderConnections() {
+    const el = $("#connected");
+    const list = Array.from(connections.values()).map(function (c) {
+      const r = runeForName(c.name);
+      return r ? r.symbol : c.name;
+    });
+    el.textContent = list.length ? "Connected runes: " + list.join(" · ") : "";
+    el.hidden = !list.length;
+    setScanBusy(false);
+  }
+
+  function onRunePress(id, conn) {
+    const now = Date.now();
+    if (lastPress[id] && now - lastPress[id] < PRESS_DEBOUNCE_MS) return;
+    lastPress[id] = now;
+    handleRune(id, conn, { keepConnected: true });
+  }
+
+  function onRuneDisconnect(conn) {
+    if (!connections.has(conn.device.id)) return;
+    connections.delete(conn.device.id);
+    renderConnections();
+    const r = runeForName(conn.name);
+    setStatus((r ? "Rune " + r.symbol : conn.name) + " lost connection. Tap Connect rune to reconnect.", true);
+  }
 
   async function scan() {
     if (state.busy) return;
@@ -220,15 +258,23 @@
     setScanBusy("searching");
     setStatus("Choose the rune in the list…");
     try {
-      const conn = await RuneBLE.scan(function (stage) {
-        setScanBusy(stage);
-        if (stage === "connecting") setStatus("Waking the rune…");
+      const conn = await RuneBLE.connect({
+        onStage: function (stage) {
+          setScanBusy(stage);
+          if (stage === "connecting") setStatus("Waking the rune…");
+        },
+        onPress: onRunePress,
+        onDisconnect: onRuneDisconnect
       });
-      setScanBusy(false);
-      await handleRune(conn.id, conn);
+      const old = connections.get(conn.device.id);
+      if (old && old !== conn) RuneBLE.disconnect(old);
+      connections.set(conn.device.id, conn);
+      renderConnections();
+      const r = runeForName(conn.name);
+      setStatus((r ? "Rune " + r.symbol : conn.name) + " connected. Press the rune to hear its story.");
     } catch (err) {
       console.warn(err);
-      if (err && err.name === "NotFoundError") setStatus("No rune chosen. Tap Scan rune to try again.");
+      if (err && err.name === "NotFoundError") setStatus("No rune chosen. Tap Connect rune to try again.");
       else setStatus("Could not reach the rune. Move closer and try again.", true);
     } finally {
       state.busy = false;
@@ -241,8 +287,9 @@
      earlier rune      → LED "1" + ALREADY
      later rune        → LED "2" + NOT_YET
      after last rune   → story, then FINISHED
-     conn may be null (NFC / debug): LED writes are skipped. */
-  async function handleRune(id, conn) {
+     conn may be null (NFC / debug): LED writes are skipped.
+     opts.keepConnected: true for button presses (stay connected). */
+  async function handleRune(id, conn, opts) {
     try {
       const index = RUNES.findIndex(function (r) { return r.id === Number(id); });
       if (index < 0) { setStatus("This rune is not part of the quest.", true); return; }
@@ -264,7 +311,7 @@
         showOverlay("notyet", rune);
       }
     } finally {
-      RuneBLE.disconnect(conn);
+      if (!(opts && opts.keepConnected)) RuneBLE.disconnect(conn);
     }
   }
 

@@ -314,6 +314,13 @@ body.is-finale .vignette {
 }
 .status.is-changing { opacity: 0; }
 .status.is-error { color: var(--blood); }
+.connected {
+  font-size: .62rem;
+  letter-spacing: .18em;
+  color: var(--moss);
+  text-align: center;
+}
+.connected::before { content: "● "; }
 
 /* ---- Confirm note ---- */
 .confirm {
