@@ -340,7 +340,7 @@
 
     showScreen("story");
     if (fresh) {
-      burstDust();
+      playUnlockFx(rune);
       const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
       if (navigator.vibrate && tapped) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
     }
@@ -357,21 +357,60 @@
     $("#audio-toggle").focus();
   }
 
-  function burstDust() {
+  /* ---------------- Full-screen "rune unlocked" moment ---------------- */
+  const UNLOCK_FX_MS = 2600;
+  let fxTimer = null;
+
+  function playUnlockFx(rune) {
+    const fx = $("#unlockfx");
+    clearTimeout(fxTimer);
+    fx.classList.remove("is-leaving");
+    fx.hidden = true;
+    void fx.offsetWidth; // restart the CSS animations
+    $("#unlockfx-glyph").textContent = rune.symbol;
+    $("#unlockfx-room").textContent = rune.room;
+    fx.hidden = false;
+    burstDust($("#unlockfx-dust"), 40, 110, 150, 1300);
+    fxTimer = setTimeout(endUnlockFx, reducedMotion ? 1400 : UNLOCK_FX_MS);
+  }
+
+  function endUnlockFx() {
+    const fx = $("#unlockfx");
+    clearTimeout(fxTimer);
+    if (fx.hidden) return;
+    fx.classList.add("is-leaving");
+    fxTimer = setTimeout(function () {
+      fx.hidden = true;
+      fx.classList.remove("is-leaving");
+      const play = document.querySelector("[data-action='start-story']");
+      if (play && state.screen === "story" && !$("#unlocked").hidden) play.focus();
+    }, reducedMotion ? 0 : 430);
+  }
+
+  function hideUnlockFx() {
+    clearTimeout(fxTimer);
+    $("#unlockfx").hidden = true;
+    $("#unlockfx").classList.remove("is-leaving");
+  }
+
+  function burstDust(box, count, distMin, distRange, lifeMs) {
     if (reducedMotion) return;
-    const box = $("#dust");
+    box = box || $("#dust");
+    count = count || 22;
+    distMin = distMin || 70;
+    distRange = distRange || 60;
     box.replaceChildren();
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < count; i++) {
       const s = document.createElement("i");
       const angle = Math.random() * Math.PI * 2;
-      const dist = 70 + Math.random() * 60;
+      const dist = distMin + Math.random() * distRange;
       s.style.setProperty("--x", (Math.cos(angle) * dist).toFixed(0) + "px");
       s.style.setProperty("--y", (Math.sin(angle) * dist).toFixed(0) + "px");
       s.style.setProperty("--d", Math.round(Math.random() * 160) + "ms");
       s.style.setProperty("--sz", (2 + Math.random() * 4).toFixed(1) + "px");
       box.appendChild(s);
     }
-    setTimeout(function () { box.replaceChildren(); }, 1100);
+    setTimeout(function () { box.replaceChildren(); }, lifeMs || 1100);
   }
 
   /* ---------------- Audio bar ---------------- */
@@ -460,6 +499,7 @@
   function doReset() {
     hideConfirms();
     hideOverlay(true);
+    hideUnlockFx();
     AudioPlayer.stop();
     setProgress(0);
     state.drawnProgress = null;
@@ -506,7 +546,10 @@
   });
 
   $("#overlay").addEventListener("click", function () { hideOverlay(true); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") hideOverlay(true); });
+  $("#unlockfx").addEventListener("click", endUnlockFx);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { hideOverlay(true); endUnlockFx(); }
+  });
 
   /* ---------------- Optional assets ---------------- */
   function probeAssets() {

@@ -356,6 +356,23 @@
     </section>
   </main>
 
+  <!-- ===================== Full-screen "rune unlocked" moment ===================== -->
+  <div class="unlockfx" id="unlockfx" hidden>
+    <div class="unlockfx__emblem" aria-hidden="true">
+      <div class="unlockfx__rays"></div>
+      <svg class="unlockfx__ring" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="92" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <circle cx="100" cy="100" r="84" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="2 9" opacity=".7"/>
+        <circle cx="100" cy="100" r="74" fill="none" stroke="currentColor" stroke-width=".8" opacity=".6"/>
+      </svg>
+      <div class="unlockfx__dust" id="unlockfx-dust"></div>
+      <div class="unlockfx__glyph" id="unlockfx-glyph">ᚠ</div>
+    </div>
+    <p class="unlockfx__label">Rune unlocked</p>
+    <p class="unlockfx__room" id="unlockfx-room"></p>
+    <p class="label unlockfx__skip">Tap to continue</p>
+  </div>
+
   <!-- ===================== Feedback overlay ===================== -->
   <div class="overlay" id="overlay" hidden>
     <div class="overlay__note" id="overlay-note" role="status" aria-live="polite" tabindex="-1">
