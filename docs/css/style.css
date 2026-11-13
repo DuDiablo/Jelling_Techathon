@@ -262,7 +262,8 @@ body.is-finale .vignette {
   gap: var(--s1);
   margin-bottom: var(--s2);
 }
-.topbar__titles { text-align: center; }
+.topbar__titles { text-align: center; min-width: 0; }
+.topbar__titles .label { white-space: nowrap; letter-spacing: .25em; }
 .topbar__title {
   font-family: var(--font-head);
   font-size: 1.25rem;

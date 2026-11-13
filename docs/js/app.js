@@ -283,7 +283,8 @@
     showScreen("story");
     if (fresh) {
       burstDust();
-      if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
+      const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+      if (navigator.vibrate && tapped) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
     }
     AudioPlayer.play(rune.audio, rune.text);
   }
