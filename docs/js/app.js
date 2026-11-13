@@ -8,6 +8,10 @@
   "use strict";
 
   const KEY_PROGRESS = "haraldProgress";
+  // false = every page refresh starts the quest from zero (testing / demos).
+  // true  = collected runes are remembered after a refresh. NOTE: the NFC
+  //         fallback (?rune=N) opens a fresh page per tag, so it needs true.
+  const PERSIST_PROGRESS = false;
   const KEY_SHOW_TEXT = "haraldShowText";
   const OVERLAY_MS = 4000;
   const params = new URLSearchParams(location.search);
@@ -26,7 +30,7 @@
 
   /* ---------------- State ---------------- */
   const state = {
-    progress: clampProgress(parseInt(load(KEY_PROGRESS), 10)), // number of runes collected, in order
+    progress: PERSIST_PROGRESS ? clampProgress(parseInt(load(KEY_PROGRESS), 10)) : 0, // runes collected, in order
     showText: load(KEY_SHOW_TEXT) !== "0",
     busy: false,
     screen: "start",
@@ -41,7 +45,7 @@
   }
   function setProgress(n) {
     state.progress = clampProgress(n);
-    save(KEY_PROGRESS, state.progress);
+    if (PERSIST_PROGRESS) save(KEY_PROGRESS, state.progress);
   }
   function isComplete() { return state.progress >= RUNES.length; }
 
@@ -462,6 +466,7 @@
 
   /* ---------------- Init ---------------- */
   function init() {
+    if (!PERSIST_PROGRESS) { try { localStorage.removeItem(KEY_PROGRESS); } catch (e) { /* ignore */ } }
     buildMap();
     renderMap();
     applyShowText();
