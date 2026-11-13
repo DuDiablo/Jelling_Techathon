@@ -59,7 +59,11 @@
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  min-height: 100%;
+  background-color: var(--parchment-dark); /* fills overscroll / behind browser bars */
+}
 
 body {
   margin: 0;
@@ -941,6 +945,7 @@ body.is-finale {
 
 /* Tablets and desktops: desk + journal page */
 @media (min-width: 600px) {
+  html { background-color: #21150d; }
   body {
     background-color: #2a1b12;
     background-image:
@@ -1014,6 +1019,7 @@ body.is-finale {
 
 /* Phones turned sideways: two columns, compact */
 @media (orientation: landscape) and (max-height: 560px) {
+  html { background-color: var(--parchment-dark); }
   body { padding: 0; }
   .app { max-width: 920px; margin: 0 auto; min-height: 100dvh; padding: calc(var(--s1) + var(--safe-t)) calc(var(--s3) + var(--safe-r)) calc(var(--s2) + var(--safe-b)) calc(var(--s3) + var(--safe-l)); border-radius: 0; }
   .vignette { display: block; }
