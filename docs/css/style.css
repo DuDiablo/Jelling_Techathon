@@ -446,14 +446,18 @@ body.has-map-bg .screen--start::before {
 
 /* ---------- 4.2 Quest map ---------- */
 .screen--map { gap: var(--s2); }
+.map-side { display: flex; flex-direction: column; gap: var(--s2); flex: 1; }
+.map-side .map-actions { margin-top: auto; padding-top: var(--s1); }
 .screen--map .topbar { margin-bottom: 0; }
 
 .mapcard-wrap { filter: drop-shadow(0 6px 10px rgba(43, 26, 18, .28)); }
 .mapcard {
   position: relative;
   aspect-ratio: 4 / 5;
-  max-height: 52vh;
-  max-height: 52dvh;
+  width: 100%;
+  max-width: calc(56dvh * .8);
+  max-height: 56vh;
+  max-height: 56dvh;
   margin: 0 auto;
   color: var(--ink);
   background:
@@ -484,12 +488,13 @@ body.has-map-bg .screen--start::before {
 #route-reveal { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
 #route-reveal.is-drawing { animation: drawRoute 1.4s var(--ease) both; }
 
-.markers { position: absolute; inset: 0; }
+.markers { position: absolute; inset: 0; container-type: inline-size; }
 .marker {
+  --size: clamp(36px, 15cqw, 54px);
   position: absolute;
-  width: 54px;
-  height: 54px;
-  margin: -27px 0 0 -27px;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
   padding: 0;
   border: 0;
   background: none;
@@ -503,7 +508,7 @@ body.has-map-bg .screen--start::before {
   display: grid;
   place-items: center;
   font-family: var(--font-head);
-  font-size: 1.5rem;
+  font-size: calc(var(--size) * .44);
   font-weight: 700;
   line-height: 1;
   color: rgba(43, 26, 18, .55);
@@ -531,14 +536,16 @@ body.has-map-bg .screen--start::before {
   padding: 0 4px;
   white-space: nowrap;
   font-family: var(--font-head);
-  font-size: .6rem;
+  font-size: clamp(.5rem, 2.9cqw, .62rem);
   font-weight: 700;
-  letter-spacing: .12em;
+  letter-spacing: clamp(.04em, .6cqw, .12em);
   text-transform: uppercase;
   color: var(--ink);
   background: rgba(243, 233, 210, .8);
   border-radius: 2px;
 }
+.marker.is-edge-left .marker__name { left: -4px; transform: none; }
+.marker.is-edge-right .marker__name { left: auto; right: -4px; transform: none; }
 /* locked */
 .marker.is-locked .marker__seal { filter: grayscale(1) drop-shadow(0 1px 1px rgba(43, 26, 18, .25)); opacity: .6; }
 .marker.is-locked::before {
@@ -911,6 +918,134 @@ body.is-finale {
 .overlay__title { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--accent); letter-spacing: .04em; }
 .overlay__text { margin-top: 2px; }
 .overlay__dismiss { margin-top: var(--s1); font-size: .6rem; opacity: .75; }
+
+/* ---------- 4.6 Other devices ----------
+   Phones (default): full-bleed parchment.
+   Very small / short phones: tighter spacing.
+   Tablets + desktops (≥600px): dark leather desk with a parchment journal page on top.
+   Wide screens (≥900px) and landscape phones: map left, hint + buttons right. */
+
+@media (max-width: 340px) {
+  .app { padding-left: calc(12px + var(--safe-l)); padding-right: calc(12px + var(--safe-r)); }
+  .tiles { gap: 12px; }
+  .tile { width: 46px; height: 46px; }
+  .btn { letter-spacing: .16em; }
+}
+
+@media (max-height: 640px) and (orientation: portrait) {
+  .start__stack { gap: 12px; }
+  .start__stack .stack-actions { margin-top: var(--s1); }
+  .medallion-wrap { width: 120px; height: 120px; }
+  .medallion__glyph { font-size: 3.6rem; }
+}
+
+/* Tablets and desktops: desk + journal page */
+@media (min-width: 600px) {
+  body {
+    background-color: #2a1b12;
+    background-image:
+      radial-gradient(ellipse at 50% 20%, rgba(120, 78, 44, .55), transparent 65%),
+      radial-gradient(ellipse at 15% 90%, rgba(70, 40, 20, .6), transparent 55%),
+      repeating-linear-gradient(92deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 9px),
+      linear-gradient(180deg, #3b2717, #21150d);
+  }
+  body.is-finale { background-color: #1b110b; background-image: radial-gradient(ellipse at 50% 30%, rgba(110, 70, 36, .45), transparent 65%), linear-gradient(180deg, #2a1a10, #140c07); }
+  .vignette { display: none; }
+  .grain { opacity: .08; }
+
+  body { padding: var(--s4) var(--s3); }
+  .app {
+    position: relative;
+    max-width: 600px;
+    min-height: calc(100dvh - 2 * var(--s4));
+    margin: 0 auto;
+    padding: var(--s5) var(--s5) var(--s4);
+    border-radius: 4px;
+    background-color: var(--parchment);
+    background-image:
+      radial-gradient(ellipse at 22% 18%, rgba(255, 246, 222, .6), transparent 55%),
+      radial-gradient(ellipse at 80% 85%, rgba(170, 128, 70, .25), transparent 60%),
+      linear-gradient(172deg, #efe3c8 0%, var(--parchment) 45%, var(--parchment-dark) 100%);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .4);
+    isolation: isolate;
+  }
+  .app::after {                       /* burnt page edges */
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 70px 6px rgba(110, 62, 24, .45), inset 0 0 14px rgba(70, 36, 12, .45);
+  }
+  body.is-finale .app {
+    background-image:
+      radial-gradient(ellipse at 50% 30%, rgba(233, 214, 170, .7), transparent 60%),
+      linear-gradient(180deg, #c7ae80, #a68a5c);
+  }
+  body.is-finale .app::after { box-shadow: inset 0 0 120px 30px rgba(43, 20, 8, .6), inset 0 0 24px rgba(30, 14, 6, .5); }
+
+  .screen--start { min-height: calc(100dvh - 2 * var(--s4) - var(--s5) - var(--s4)); }
+  .oldmap { position: absolute; z-index: -1; }
+  body.has-map-bg .screen--start::before { position: absolute; }
+  .overlay__note { max-width: 520px; }
+  .mapcard { max-width: calc(54dvh * .8); max-height: 54dvh; }
+}
+
+/* Wide screens: two-column map */
+@media (min-width: 900px) {
+  .app { max-width: 1000px; }
+  :root { --fs-title: 4.4rem; }
+  .tagline { font-size: 1.35rem; }
+  .screen--story, .screen--settings, .screen--finale { width: 100%; max-width: 600px; margin: 0 auto; }
+
+  .screen--map {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: var(--s5);
+    align-items: start;
+  }
+  .screen--map .topbar { grid-column: 1 / -1; }
+  .mapcard-wrap { width: 100%; }
+  .mapcard { max-width: calc((100dvh - 220px) * .8); max-height: calc(100dvh - 220px); }
+  .map-side { justify-content: center; align-self: stretch; padding-top: var(--s3); }
+  .map-side .map-actions { margin-top: var(--s2); }
+}
+
+/* Phones turned sideways: two columns, compact */
+@media (orientation: landscape) and (max-height: 560px) {
+  body { padding: 0; }
+  .app { max-width: 920px; margin: 0 auto; min-height: 100dvh; padding: calc(var(--s1) + var(--safe-t)) calc(var(--s3) + var(--safe-r)) calc(var(--s2) + var(--safe-b)) calc(var(--s3) + var(--safe-l)); border-radius: 0; }
+  .vignette { display: block; }
+  :root { --fs-title: 2.4rem; }
+  .screen--start { min-height: calc(100dvh - var(--s3) - var(--safe-t) - var(--safe-b)); }
+  .start__stack { gap: var(--s1); }
+  .start__stack .stack-actions { flex-direction: row; justify-content: center; margin-top: var(--s1); }
+  .start__stack .stack-actions .btn { max-width: 220px; }
+  .start__footer { position: static; margin-top: var(--s1); }
+
+  .screen--map {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: var(--s3);
+    row-gap: var(--s1);
+  }
+  .screen--map .topbar { grid-column: 1 / -1; }
+  .mapcard { height: calc(100dvh - 90px); max-height: none; width: auto; max-width: none; }
+  .map-side { gap: var(--s1); justify-content: center; }
+  .map-side .map-actions { margin-top: 0; }
+  .tile { width: 44px; height: 44px; font-size: 1.3rem; }
+
+  .screen--story { display: grid; grid-template-columns: 140px minmax(0, 1fr); column-gap: var(--s3); align-items: start; text-align: left; }
+  .screen--story > * { grid-column: 2; }
+  .screen--story .medallion-wrap { grid-column: 1; grid-row: 1 / span 6; width: 130px; height: 130px; }
+  .screen--story .knot { margin: 0; }
+  .screen--story .stack-actions { flex-direction: row; }
+  .screen--finale { max-width: 640px; width: 100%; margin: 0 auto; padding-top: var(--s2); }
+  .bindrune { width: 120px; height: 120px; }
+  .bindrune__glyph { font-size: 5.5rem; }
+}
 
 /* ============================== 5. ANIMATIONS ============================== */
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }

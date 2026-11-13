@@ -106,7 +106,7 @@
     const tiles = $("#tiles");
     RUNES.forEach(function (rune, i) {
       const m = document.createElement("div");
-      m.className = "marker";
+      m.className = "marker" + (rune.mapX < 32 ? " is-edge-left" : rune.mapX > 68 ? " is-edge-right" : "");
       m.id = "marker-" + i;
       m.setAttribute("role", "img");
       m.style.left = rune.mapX + "%";
