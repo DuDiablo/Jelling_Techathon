@@ -284,13 +284,30 @@
     $("#story-next").textContent = final ? "Continue" : "Back to map";
     resetAudioBar();
 
+    // "Rune unlocked" card: the audio waits until the visitor taps Play.
+    $("#unlocked-glyph").textContent = rune.symbol;
+    $("#unlocked-title").textContent = "Rune " + rune.symbol + " unlocked!";
+    $("#unlocked-text").textContent = "Tap play to hear the story of " + rune.room + ".";
+    $("#unlocked").hidden = false;
+    $("#audiobar").hidden = true;
+
     showScreen("story");
     if (fresh) {
       burstDust();
       const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
       if (navigator.vibrate && tapped) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
     }
-    AudioPlayer.play(rune.audio, rune.text);
+    AudioPlayer.prepare(rune.audio, rune.text);
+  }
+
+  /* Visitor tapped "Play story": swap the unlocked card for the audio bar and start. */
+  function startStory() {
+    const st = state.story;
+    if (!st) return;
+    $("#unlocked").hidden = true;
+    $("#audiobar").hidden = false;
+    AudioPlayer.play(st.rune.audio, st.rune.text);
+    $("#audio-toggle").focus();
   }
 
   function burstDust() {
@@ -417,7 +434,11 @@
       case "settings": showScreen("settings"); break;
       case "back": showScreen(state.previous && state.previous !== "settings" ? state.previous : "start"); break;
       case "scan": scan(); break;
-      case "replay": AudioPlayer.replay(); break;
+      case "start-story": startStory(); break;
+      case "replay":
+        if (state.screen === "story" && !$("#unlocked").hidden) startStory();
+        else AudioPlayer.replay();
+        break;
       case "story-next":
         if (state.story && state.story.final) showFinale();
         else showScreen("map");

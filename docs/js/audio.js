@@ -131,7 +131,14 @@ const AudioPlayer = (function () {
     emit("state", { playing: false, mode: null });
   }
 
+  /* Loads a clip without playing it; toggle()/replay() will start it. */
+  function prepare(src, text) {
+    teardown();
+    current = { src: src, text: text };
+    emit("state", { playing: false, mode: null });
+  }
+
   function getMode() { return mode; }
 
-  return { on: on, play: play, toggle: toggle, replay: replay, stop: stop, getMode: getMode };
+  return { on: on, play: play, prepare: prepare, toggle: toggle, replay: replay, stop: stop, getMode: getMode };
 })();
