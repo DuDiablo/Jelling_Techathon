@@ -250,7 +250,20 @@
       <h2 class="story__room" id="story-room">The Fire Room</h2>
       <svg class="knot knot--small" aria-hidden="true"><use href="#knot"/></svg>
 
-      <div class="audiobar" id="audiobar">
+      <!-- Shown right after a rune is collected; audio starts only when the visitor taps Play -->
+      <div class="unlocked" id="unlocked" role="status" aria-live="polite">
+        <span class="unlocked__seal" id="unlocked-glyph" aria-hidden="true">ᚠ</span>
+        <div class="unlocked__body">
+          <p class="unlocked__title" id="unlocked-title">Rune unlocked!</p>
+          <p class="unlocked__text" id="unlocked-text"></p>
+        </div>
+        <button class="btn btn--primary unlocked__btn" type="button" data-action="start-story">
+          <svg class="btn__icon" aria-hidden="true"><use href="#icon-play"/></svg>
+          <span>Play story</span>
+        </button>
+      </div>
+
+      <div class="audiobar" id="audiobar" hidden>
         <div class="audiobar__track" aria-hidden="true">
           <div class="audiobar__fill" id="audio-fill"></div>
           <div class="audiobar__knob" id="audio-knob"></div>

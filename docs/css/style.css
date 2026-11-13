@@ -698,6 +698,59 @@ body.has-map-bg .screen--start::before {
 }
 body.hide-text .transcript { display: none; }
 
+/* "Rune unlocked" card (before the story is played) */
+.unlocked {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  max-width: 400px;
+  padding: var(--s2) var(--s2) var(--s2);
+  text-align: left;
+  background: linear-gradient(180deg, #f6eedb, var(--parchment));
+  border: 1px solid rgba(90, 70, 50, .4);
+  border-top: 4px solid var(--gold);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), inset 0 0 20px rgba(170, 128, 70, .22);
+  animation: fadeUp .5s var(--ease) .25s both;
+}
+.unlocked__seal {
+  position: relative;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--gold-light);
+  isolation: isolate;
+  animation: stamp .55s cubic-bezier(.3, 1.6, .5, 1) .45s both;
+}
+.unlocked__seal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--moss);
+  -webkit-mask: var(--seal-mask) center / contain no-repeat;
+  mask: var(--seal-mask) center / contain no-repeat;
+  filter: drop-shadow(0 2px 2px rgba(43, 26, 18, .4));
+}
+.unlocked__body { flex: 1; min-width: 0; }
+.unlocked__title {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: .06em;
+  color: var(--moss);
+}
+.unlocked__text { margin-top: 2px; font-style: italic; color: var(--ink-soft); }
+.unlocked__btn { max-width: none; }
+.unlocked__btn .btn__icon { width: 18px; height: 18px; }
+
 /* audio bar */
 .audiobar { width: 100%; max-width: 360px; padding: var(--s1) 0; }
 .audiobar__track { position: relative; height: 18px; margin: 0 9px; }
@@ -918,7 +971,7 @@ body.is-finale {
   mask: var(--seal-mask) center / contain no-repeat;
   filter: drop-shadow(0 2px 2px rgba(43, 26, 18, .4));
 }
-.overlay__note { --seal-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M94.5 50L96.3 58.2L93.7 65.9L90.7 73.5L85.2 79.6L80.2 86L72.8 89.4L66.1 94.2L57.8 94.3L50 97L42.3 93.8L33.9 94.2L26.8 90.3L19.8 86L14.8 79.6L9.3 73.5L7.2 65.6L3.7 58.2L5 50L3.7 41.8L8.2 34.8L9.3 26.5L14.4 20.1L19.8 14L27 10.2L33.9 5.8L42.1 5.2L50 3L57.8 5.7L66.1 5.8L72.3 11.5L80.2 14L85.6 20.1L90.7 26.5L93.2 34.3L96.3 41.8Z'/%3E%3C/svg%3E"); }
+.overlay__note, .unlocked { --seal-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M94.5 50L96.3 58.2L93.7 65.9L90.7 73.5L85.2 79.6L80.2 86L72.8 89.4L66.1 94.2L57.8 94.3L50 97L42.3 93.8L33.9 94.2L26.8 90.3L19.8 86L14.8 79.6L9.3 73.5L7.2 65.6L3.7 58.2L5 50L3.7 41.8L8.2 34.8L9.3 26.5L14.4 20.1L19.8 14L27 10.2L33.9 5.8L42.1 5.2L50 3L57.8 5.7L66.1 5.8L72.3 11.5L80.2 14L85.6 20.1L90.7 26.5L93.2 34.3L96.3 41.8Z'/%3E%3C/svg%3E"); }
 .overlay__title { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--accent); letter-spacing: .04em; }
 .overlay__text { margin-top: 2px; }
 .overlay__dismiss { margin-top: var(--s1); font-size: .6rem; opacity: .75; }
