@@ -173,11 +173,11 @@
     const house = state.clan ? " for the " + state.clan.name : "";
     $("#sail-gold").textContent = r.gold;
     $("#sail-gold-label").textContent = "gold" + house;
-    $("#sail-text").textContent = "You kept " + r.coins + " of " + r.total + " silver coins" +
+    $("#sail-text").textContent = "You kept " + r.coins + " of Odin's " + r.total + " gold rings" +
       (r.hits ? " and bumped into something " + r.hits + (r.hits === 1 ? " time." : " times.") : " and never touched a rock!") +
       (r.bonus ? " Clean voyage bonus: +" + r.bonus + "." : "");
     $("#sail-best").textContent = best ? "A new record for your clan!"
-      : state.gold ? "Your best: " + state.gold + " gold" : "Steer around the rocks to keep your coins!";
+      : state.gold ? "Your best: " + state.gold + " gold" : "Steer clear of the serpent to keep your rings!";
     $("#sail-result").hidden = false;
     $("#sail-again").focus();
   }
