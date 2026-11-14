@@ -1417,6 +1417,95 @@ html:has(body.is-night) { background-color: var(--jg-night); }
 .crown__hail { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--blood); animation: riseIn .9s var(--ease-settle) both; animation-delay: var(--hail-delay, 1s); }
 .crown__note { font-style: italic; font-size: .95rem; color: var(--ink-soft); }
 
+/* ---------- Take home: keepsake buttons + rune alphabet ---------- */
+.keepsakes { display: flex; flex-direction: column; gap: var(--s1); width: 100%; padding-top: var(--s2); border-top: 1px solid rgba(90, 70, 50, .25); }
+.keepsakes > .label { text-align: center; }
+.keep {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--s1) var(--s2) var(--s1) var(--s1);
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: rgba(255, 249, 232, .7);
+  border: 1px solid rgba(90, 70, 50, .45);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: background .15s, transform .12s;
+}
+.keep:hover { background: rgba(255, 249, 232, .95); }
+.keep:active { transform: translateY(1px); }
+.keep:disabled { opacity: .6; cursor: progress; }
+.keep__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  font-family: var(--font-rune);
+  font-size: 1.5rem;
+  color: #fbf1d8;
+  background: radial-gradient(circle at 35% 30%, var(--gem-hi, #e5432f), var(--clan, var(--blood)) 55%, var(--moss, var(--blood-deep)));
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .2), 0 2px 3px rgba(43, 26, 18, .3);
+}
+.keep__body { flex: 1; min-width: 0; }
+.keep__title { display: block; font-family: var(--font-head); font-weight: 700; letter-spacing: .03em; }
+.keep__sub { display: block; font-size: .9rem; font-style: italic; color: var(--ink-soft); }
+.keepsakes__status { min-height: 1.2em; text-align: center; font-size: .92rem; font-style: italic; color: var(--ink-soft); }
+
+.alphabet { width: 100%; text-align: left; border-top: 1px solid rgba(90, 70, 50, .25); }
+.alphabet summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  font-family: var(--font-head);
+  font-weight: 700;
+  letter-spacing: .06em;
+  cursor: pointer;
+  list-style: none;
+}
+.alphabet summary::-webkit-details-marker { display: none; }
+.alphabet summary svg { width: 20px; height: 20px; transition: transform .25s var(--ease); }
+.alphabet[open] summary svg { transform: rotate(180deg); }
+.alphabet__intro { font-size: .95rem; font-style: italic; color: var(--ink-soft); }
+.alphabet__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+  margin: var(--s2) 0;
+  padding: 0;
+  list-style: none;
+}
+.alphabet__grid li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0 3px;
+  background: rgba(255, 249, 232, .6);
+  border: 1px solid rgba(90, 70, 50, .3);
+  border-radius: 4px;
+}
+.alphabet__rune { font-family: var(--font-rune); font-size: 1.45rem; line-height: 1.2; color: var(--jg-red, #9e2a1c); }
+.alphabet__latin { font-family: var(--font-head); font-weight: 700; font-size: .72rem; color: var(--ink); }
+.alphabet__label { display: block; font-family: var(--font-head); font-weight: 700; font-size: .95rem; margin-bottom: var(--s1); }
+.alphabet__input { width: 100%; }
+.alphabet__out {
+  min-height: 2.4em;
+  margin: var(--s1) 0 var(--s2);
+  font-family: var(--font-rune);
+  font-size: 1.7rem;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--jg-red, #9e2a1c);
+  overflow-wrap: anywhere;
+}
+
 /* The rune stone: a granite boulder like the Jelling stones (see #granite, #stone-clip,
    #carve-stone in index.html). Layers: rock texture → rounded shading → carved border band → runes. */
 .runestone {
