@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
   <!-- VERSION: bump ?v=… on the CSS + JS links below after changing them, so phones and browsers load the new files instead of an old cached copy. -->
-  <link rel="stylesheet" href="css/style.css?v=20261114-5">
+  <link rel="stylesheet" href="css/style.css?v=20261114-6">
 </head>
 <body>
 
@@ -242,6 +242,32 @@
       </div>
     </section>
 
+    <!-- ===================== 1b. CHOOSE YOUR HOUSE (clan + number of members) ===================== -->
+    <section class="screen screen--clan" id="screen-clan" aria-labelledby="clan-title" hidden>
+      <header class="topbar">
+        <button class="icon-btn" type="button" data-action="home" aria-label="Back to start"><svg aria-hidden="true"><use href="#icon-back"/></svg></button>
+        <div class="topbar__titles"><h2 class="topbar__title" id="clan-title">Choose your house</h2></div>
+        <span class="icon-btn icon-btn--spacer" aria-hidden="true"></span>
+      </header>
+
+      <div class="card clan">
+        <p class="label" id="clan-label">Who rides with you?</p>
+        <ul class="choices clan__list" id="clan-list" role="radiogroup" aria-labelledby="clan-title"></ul>
+
+        <div class="clan__count">
+          <p class="clan__ask" id="clan-ask">How many are in your clan?</p>
+          <div class="stepper" role="group" aria-labelledby="clan-ask">
+            <button class="stepper__btn" type="button" data-action="clan-less" aria-label="Fewer members">−</button>
+            <output class="stepper__value" id="clan-count" aria-live="polite">2</output>
+            <button class="stepper__btn" type="button" data-action="clan-more" aria-label="More members">+</button>
+          </div>
+          <p class="clan__people" id="clan-people" aria-hidden="true"></p>
+        </div>
+
+        <button class="btn btn--primary clan__go" type="button" id="clan-go" data-action="clan-go" disabled>Begin the quest</button>
+      </div>
+    </section>
+
     <!-- ===================== 2. QUEST MAP ===================== -->
     <section class="screen screen--map" id="screen-map" aria-labelledby="map-title" hidden>
       <header class="topbar">
@@ -434,16 +460,16 @@
               <stop offset="1" stop-color="#241604"/>
             </linearGradient>
             <radialGradient id="crown-ruby" cx=".35" cy=".3" r=".75">
-              <stop offset="0" stop-color="#ffc2b5"/>
-              <stop offset=".22" stop-color="#e5432f"/>
-              <stop offset=".62" stop-color="#8e160d"/>
-              <stop offset="1" stop-color="#330402"/>
+              <stop offset="0" style="stop-color: var(--gem-hi, #ffc2b5)"/>
+              <stop offset=".22" style="stop-color: var(--gem, #e5432f)"/>
+              <stop offset=".62" style="stop-color: var(--gem-deep, #8e160d)"/>
+              <stop offset="1" style="stop-color: var(--gem-dark, #330402)"/>
             </radialGradient>
             <radialGradient id="crown-sapphire" cx=".35" cy=".3" r=".75">
-              <stop offset="0" stop-color="#cfe2ff"/>
-              <stop offset=".25" stop-color="#4b7bd8"/>
-              <stop offset=".65" stop-color="#173481"/>
-              <stop offset="1" stop-color="#060f2e"/>
+              <stop offset="0" style="stop-color: var(--gem-hi, #cfe2ff)"/>
+              <stop offset=".25" style="stop-color: var(--gem, #4b7bd8)"/>
+              <stop offset=".65" style="stop-color: var(--gem-deep, #173481)"/>
+              <stop offset="1" style="stop-color: var(--gem-dark, #060f2e)"/>
             </radialGradient>
             <radialGradient id="crown-pearl" cx=".38" cy=".32" r=".7">
               <stop offset="0" stop-color="#ffffff"/>
@@ -478,7 +504,7 @@
           <g fill="none" stroke="#fff3cc" stroke-width=".9" opacity=".55" stroke-linecap="round">
             <path d="M100 36 V60 M100 82 V100 M60 52 V96 M140 52 V96 M27 66 V94 M173 66 V94"/>
           </g>
-          <!-- ruby on the centre point -->
+          <!-- ruby on the centre point (all gems take the clan colour: --gem* set on <body> by app.js) -->
           <ellipse cx="100" cy="71" rx="7" ry="8.6" fill="#7a5312" stroke="#3d2706" stroke-width="1"/>
           <ellipse cx="100" cy="71" rx="5.2" ry="6.8" fill="url(#crown-ruby)"/>
           <ellipse cx="98.3" cy="68.4" rx="1.6" ry="2.2" fill="#fff" opacity=".75"/>
@@ -533,15 +559,18 @@
       <div class="crown__card">
         <form class="crown__form" id="crown-form" novalidate>
           <label class="crown__ask" for="crown-name" id="crown-ask">What is your name, traveller?</label>
-          <input class="crown__input" id="crown-name" name="name" type="text" maxlength="20"
-                 autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="done"
-                 placeholder="Your name">
+          <!-- one name field per clan member (filled by app.js; the first is always #crown-name) -->
+          <div class="crown__names" id="crown-names">
+            <input class="crown__input" id="crown-name" name="name" type="text" maxlength="20"
+                   autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="done"
+                   placeholder="Your name">
+          </div>
           <p class="crown__error" id="crown-error" aria-live="polite"></p>
           <button class="btn btn--primary" type="submit">Carve my name</button>
         </form>
 
         <div class="crown__result" id="crown-result" hidden>
-          <p class="label">Your name in runes</p>
+          <p class="label" id="crown-result-label">Your name in runes</p>
           <!-- Granite boulder like the Jelling stones: textured rock, rounded shading,
                a carved border band, and the runes chiselled inside it. -->
           <div class="runestone">
@@ -648,9 +677,9 @@
     </div>
   </div>
 
-  <script src="js/content.js?v=20261114-5"></script>
-  <script src="js/audio.js?v=20261114-5"></script>
-  <script src="js/ble.js?v=20261114-5"></script>
-  <script src="js/app.js?v=20261114-5"></script>
+  <script src="js/content.js?v=20261114-6"></script>
+  <script src="js/audio.js?v=20261114-6"></script>
+  <script src="js/ble.js?v=20261114-6"></script>
+  <script src="js/app.js?v=20261114-6"></script>
 </body>
 </html>

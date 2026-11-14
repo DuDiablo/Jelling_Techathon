@@ -28,7 +28,9 @@ Techathon 2026 · Kongernes Jelling, Denmark · Theme: *Connecting people, place
 
 ## How a visit works
 
-1. Open the app and tap **Play game**. The map shows the next rune (orange seal).
+1. Open the app and tap **Play game**, then **choose your house**: House of Gorm, Thyra or Harald, and how many are in your clan (1–6).
+   The map seals and the crown jewels take the house colour, and at the end every member carves their name on the rune stone.
+   The map shows the next rune (seal in your house colour).
 2. Tap **Connect rune**. Our own **"Wake a rune"** sheet asks which rune you're next to.
 3. Pick it. Chrome's Bluetooth window then lists **only that rune**: tap it, then **Pair**. If the phone already paired with that rune, it reconnects without the window, on Chrome versions that support it.
 4. The phone **stays connected**. **Press the physical rune.**

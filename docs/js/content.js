@@ -19,6 +19,8 @@
    - mapX/mapY: marker position on the map, in percent
                (0,0 = top-left, 100,100 = bottom-right).
 
+   The clans (houses) and the crown texts are further down.
+
    After editing, open the app with ?debug=1 to check every rune.
 
    NOTE: all texts below are PLACEHOLDERS. Check every fact with the
@@ -38,7 +40,7 @@ const RUNES = [
           "and sweep the dark like the torch-bearers of old.\n" +
           "On stone, on timber, on wall and floor —\n" +
           "shine, and keep shining, till the rune wakes once more.",
-    text: "Welcome, traveller. You stand where the fire burned day and night. In a Viking hall the hearth was the heart of the home: it gave light, warmth and food, and around it people told the stories you are about to hear. The rune ᚲ, kenaz, is the torch rune. It stands for fire and for the light that lets you see in the dark. Your quest has begun. Seek the great tree that holds up the nine worlds.",
+    text: "Right now you are in the hall, or so to speak, Harald's house. In the middle of the house there is a nice fireplace. So please sit down and listen to the stories in this room. You can also see the stories in the fire.",
     audio: "audio/rune1.mp3",
     mapX: 24,
     mapY: 70
@@ -48,7 +50,7 @@ const RUNES = [
     symbol: "ᚺ",
     room: "The Yggdrasil Room",
     hint: "Seek the great ash tree whose roots and branches hold the nine worlds together.",
-    text: "This is Yggdrasil, the world tree. The Vikings believed its branches held up the sky and its roots reached the land of the dead. Gods, giants and humans all lived somewhere on this one tree. The rune ᚺ, hagalaz, is the H rune: the first letter of a great king's name. Remember it well. Now go and find where that king left his mark in stone.",
+    text: "Right now you are standing in the mythology room. In this room you will see some huge white roots. On them there will be pictures, you will hear stories, and the room will shift colours. So please sit down and enjoy the videos.",
     audio: "audio/rune2.mp3",
     mapX: 74,
     mapY: 56
@@ -58,7 +60,7 @@ const RUNES = [
     symbol: "ᛒ",
     room: "The Rune Stone Room",
     hint: "Find the stone where a king wrote his own story. Look for the rune ᛒ.",
-    text: "King Harald raised a great stone here at Jelling. On it he wrote that he won all of Denmark and Norway, and made the Danes Christian. People called him Harald Bluetooth. The rune ᛒ, bjarkan, is the first letter of his nickname. You have now found both of his runes: ᚺ for Harald and ᛒ for Bluetooth.",
+    text: "You have just finished visiting the museum, and you have probably learned a lot about Harald, Gorm the Old and Queen Thyra. Gorm and Harald are the first in the royal line of Denmark's monarchy. Next, go outside to the monument area and see the two huge rune stones in front of the church. These are the stones that Gorm and Harald placed right here in the Viking Age.",
     audio: "audio/rune3.mp3",
     mapX: 42,
     mapY: 24
@@ -79,16 +81,64 @@ const ALREADY = {
   audio: "audio/already.mp3"
 };
 
-/* The crown screen after the finale: congratulations + the visitor's name in runes.
-   "{name}" in hail is replaced by the name they type. */
+/* The crown screen after the finale: congratulations + every clan member's name in runes.
+   {clan} is replaced by the house name, {name} by the name(s) they type.
+   The "...Many" lines are used when the clan has more than one member. */
 const CROWN = {
   kicker: "Quest complete",
   title: "Congratulations!",
-  subtitle: "Hail, Ruler of the Runes",
+  subtitle: "Hail, {clan}, Ruler of the Runes",
+  subtitleMany: "Hail, {clan}, Rulers of the Runes",
   ask: "What is your name, traveller?",
+  askMany: "What are your names, {clan}?",
   button: "Carve my name",
-  hail: "Welcome, {name}, Ruler of the Runes!",
-  note: "Your name is written in the Younger Futhark, the same runes King Harald carved on the Jelling stones."
+  buttonMany: "Carve our names",
+  hail: "Welcome, {name} of the {clan}, Ruler of the Runes!",
+  hailMany: "Welcome, {name} of the {clan}, Rulers of the Runes!",
+  note: "Your name is written in the Younger Futhark, the same runes King Harald carved on the Jelling stones.",
+  noteMany: "Your names are written in the Younger Futhark, the same runes King Harald carved on the Jelling stones."
+};
+
+/* The houses a group can play as, chosen after "Play game".
+   colour: the seals on the map.  deep: collected seals.  gem: the jewels in the crown.
+   rune: the house's first letter in the Younger Futhark. */
+const CLANS = [
+  {
+    id: "gorm",
+    name: "House of Gorm",
+    rune: "ᚴ",
+    motto: "Gorm the Old, first king of the Jelling line.",
+    colour: "#3f7a3a",
+    deep: "#264d23",
+    gem: "#9be38a"
+  },
+  {
+    id: "thyra",
+    name: "House of Thyra",
+    rune: "ᚦ",
+    motto: "Queen Thyra, honoured on the Jelling stones.",
+    colour: "#a3243b",
+    deep: "#6b1426",
+    gem: "#ff9aac"
+  },
+  {
+    id: "harald",
+    name: "House of Harald",
+    rune: "ᚼ",
+    motto: "Harald Bluetooth, who united the Danes.",
+    colour: "#2a5fae",
+    deep: "#183c74",
+    gem: "#9cc8ff"
+  }
+];
+
+/* The "Choose your house" screen. maxMembers = the most names carved on the stone. */
+const CLAN_SCREEN = {
+  title: "Choose your house",
+  label: "Who rides with you?",
+  ask: "How many are in your clan?",
+  button: "Begin the quest",
+  maxMembers: 6
 };
 
 /* The finale after the last rune. "hint" is shown on the map once the quest is complete. */

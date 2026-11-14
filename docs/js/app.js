@@ -37,7 +37,9 @@
     screen: "start",
     previous: "start",
     drawnProgress: null,     // progress the map route/seals were last drawn for
-    story: null              // { rune, fresh, final }
+    story: null,             // { rune, fresh, final }
+    clan: null,              // chosen house from CLANS (null until picked)
+    members: 2               // people in the clan: one name each on the rune stone
   };
 
   function clampProgress(n) {
@@ -91,6 +93,82 @@
     if (name === "map") animateMap();
   }
 
+  /* ---------------- Clan: choose your house ---------------- */
+  // The clan colour replaces the map seal colours (--ember / --moss) and the crown gems (--gem*).
+  const CLAN_VARS = ["--ember", "--moss", "--clan", "--gem-hi", "--gem", "--gem-deep", "--gem-dark"];
+
+  function applyClan() {
+    const c = state.clan;
+    const st = document.body.style;
+    if (!c) {
+      document.body.removeAttribute("data-clan");
+      CLAN_VARS.forEach(function (v) { st.removeProperty(v); });
+      return;
+    }
+    document.body.setAttribute("data-clan", c.id);
+    st.setProperty("--ember", c.colour);
+    st.setProperty("--moss", c.deep);
+    st.setProperty("--clan", c.colour);
+    st.setProperty("--gem-hi", c.gem);
+    st.setProperty("--gem", c.colour);
+    st.setProperty("--gem-deep", c.deep);
+    st.setProperty("--gem-dark", "#0e0705");
+  }
+
+  function renderClanScreen() {
+    $("#clan-title").textContent = CLAN_SCREEN.title;
+    $("#clan-label").textContent = CLAN_SCREEN.label;
+    $("#clan-ask").textContent = CLAN_SCREEN.ask;
+    $("#clan-go").textContent = CLAN_SCREEN.button;
+    const list = $("#clan-list");
+    list.replaceChildren();
+    CLANS.forEach(function (c) {
+      const picked = state.clan && state.clan.id === c.id;
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "choice clan__choice" + (picked ? " is-picked" : "");
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", picked ? "true" : "false");
+      b.setAttribute("data-action", "pick-clan");
+      b.setAttribute("data-clan", c.id);
+      b.style.setProperty("--seal-color", c.colour);
+      b.innerHTML =
+        '<span class="choice__seal" aria-hidden="true">' + escapeHtml(c.rune) + "</span>" +
+        '<span class="choice__body"><span class="choice__room">' + escapeHtml(c.name) + "</span>" +
+        '<span class="choice__state">' + escapeHtml(c.motto) + "</span></span>" +
+        '<span class="clan__tick" aria-hidden="true"><svg><use href="#icon-check"/></svg></span>';
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+    renderMembers();
+    $("#clan-go").disabled = !state.clan;
+  }
+
+  function renderMembers() {
+    const max = CLAN_SCREEN.maxMembers || 6;
+    state.members = Math.max(1, Math.min(max, state.members));
+    $("#clan-count").textContent = String(state.members);
+    $("[data-action='clan-less']").disabled = state.members <= 1;
+    $("[data-action='clan-more']").disabled = state.members >= max;
+    // one little warrior rune (ᛘ, "man") per member
+    $("#clan-people").textContent = Array(state.members + 1).join("ᛘ ").trim();
+  }
+
+  function pickClan(id) {
+    state.clan = CLANS.find(function (c) { return c.id === id; }) || null;
+    applyClan();
+    renderClanScreen();
+    const picked = $("#clan-list [aria-checked='true']");
+    if (picked) picked.focus();
+  }
+
+  /* Fill {clan} in a text. Without a clan (e.g. opened via NFC) the house part is left out. */
+  function clanText(text) {
+    if (state.clan) return text.replace(/\{clan\}/g, state.clan.name);
+    return text.replace(/ of the \{clan\}/g, "").replace(/, \{clan\}/g, "").replace(/\{clan\}/g, "traveller");
+  }
+
   /* ---------------- Map ---------------- */
   const MAP_W = 400, MAP_H = 500;
   const ENTRANCE = { x: 200, y: 444 };
@@ -140,7 +218,9 @@
 
   function renderMap() {
     const n = RUNES.length;
-    $("#progress-label").textContent = "Runes found: " + state.progress + " / " + n;
+    $("#map-title").textContent = state.clan ? state.clan.name : "The Quest";
+    $("#progress-label").textContent = "Runes found: " + state.progress + " / " + n +
+      (state.clan ? " · " + state.members + (state.members === 1 ? " seeker" : " seekers") : "");
 
     RUNES.forEach(function (rune, i) {
       const status = i < state.progress ? "collected" : (i === state.progress ? "next" : "locked");
@@ -682,15 +762,49 @@
     finaleAutoCrown = false;
     $("#crown-kicker").textContent = CROWN.kicker;
     $("#crown-title").textContent = CROWN.title;
-    $("#crown-subtitle").textContent = CROWN.subtitle;
-    $("#crown-ask").textContent = CROWN.ask;
-    $("#crown-form").querySelector("[type=submit]").textContent = CROWN.button;
-    $("#crown-note").textContent = CROWN.note;
+    const many = memberCount() > 1;
+    $("#crown-subtitle").textContent = clanText(many ? CROWN.subtitleMany : CROWN.subtitle);
+    $("#crown-ask").textContent = clanText(many ? CROWN.askMany : CROWN.ask);
+    $("#crown-form").querySelector("[type=submit]").textContent = many ? CROWN.buttonMany : CROWN.button;
+    $("#crown-note").textContent = many ? CROWN.noteMany : CROWN.note;
+    $("#crown-result-label").textContent = many ? "Your names in runes" : "Your name in runes";
+    buildNameFields();
     resetCrownForm();
     showScreen("crown");
     burstDust($("#crown-dust"), 44, 90, 170, 2400); // sparks drift ~1.9 s + up to 0.16 s delay
     const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
     if (navigator.vibrate && tapped) { try { navigator.vibrate([60, 80, 120]); } catch (e) { /* ignore */ } }
+  }
+
+  // Without a chosen clan (NFC / debug) the crown asks for one name, as before.
+  function memberCount() { return state.clan ? state.members : 1; }
+
+  function buildNameFields() {
+    const box = $("#crown-names");
+    const first = $("#crown-name");
+    const n = memberCount();
+    Array.prototype.slice.call(box.children).forEach(function (el) { if (el !== first) el.remove(); });
+    first.placeholder = n > 1 ? "Name 1" : "Your name";
+    first.setAttribute("aria-label", n > 1 ? "Name 1" : "Your name");
+    first.setAttribute("enterkeyhint", n > 1 ? "next" : "done");
+    for (let i = 2; i <= n; i++) {
+      const input = first.cloneNode(false);
+      input.removeAttribute("id");
+      input.value = "";
+      input.placeholder = "Name " + i;
+      input.setAttribute("aria-label", "Name " + i);
+      input.setAttribute("autocomplete", "off");
+      input.setAttribute("enterkeyhint", i === n ? "done" : "next");
+      box.appendChild(input);
+    }
+    $("#crown-ask").setAttribute("for", "crown-name");
+  }
+
+  function nameInputs() { return $$("#crown-names .crown__input"); }
+
+  function joinNames(names) {
+    if (names.length < 2) return names.join("");
+    return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
   }
 
   function resetCrownForm() {
@@ -700,18 +814,44 @@
     $("#runestone").replaceChildren();
   }
 
-  function carveName(name) {
-    const runes = toRunes(name);
-    if (!runes.some(function (r) { return !r.gap; })) {
-      $("#crown-error").textContent = "Use letters A–Z so the runes can be carved.";
+  /* Carve every typed name, one line each. Empty fields are skipped. */
+  function carveNames(rawNames) {
+    const names = [];
+    const lines = [];
+    for (let i = 0; i < rawNames.length; i++) {
+      const clean = String(rawNames[i] || "").trim().replace(/\s+/g, " ");
+      if (!clean) continue;
+      const runes = toRunes(clean);
+      if (!runes.some(function (r) { return !r.gap; })) {
+        $("#crown-error").textContent = "Use letters A–Z so the runes can be carved.";
+        const bad = nameInputs()[i];
+        if (bad) bad.focus();
+        return;
+      }
+      names.push(clean);
+      lines.push(runes);
+    }
+    if (!names.length) {
+      $("#crown-error").textContent = memberCount() > 1 ? "Write at least one name to carve." : "Write your name to carve it.";
       $("#crown-name").focus();
       return;
     }
-    const clean = String(name).trim().replace(/\s+/g, " ");
     const stone = $("#runestone");
     stone.replaceChildren();
-    const STEP = reducedMotion ? 0 : 260;
+    // more names → smaller runes, so they all fit on the stone
+    stone.style.setProperty("--rune-fs", names.length >= 4 ? "1.75rem" : names.length >= 2 ? "2.15rem" : "2.7rem");
+    const STEP = reducedMotion ? 0 : (names.length > 2 ? 170 : 260);
     let n = 0;
+    lines.forEach(function (runes, li) {
+      if (li > 0) {
+        const br = document.createElement("span");
+        br.className = "rune-break";
+        stone.appendChild(br);
+      }
+      carveLine(runes);
+    });
+
+    function carveLine(runes) {
     runes.forEach(function (r) {
       const cell = document.createElement("span");
       cell.className = "rune-cell" + (r.gap ? " rune-cell--gap" : "");
@@ -729,10 +869,14 @@
       stone.appendChild(cell);
       n++;
     });
-    stone.setAttribute("aria-label", clean + " written in runes: " + runes.map(function (r) { return r.gap ? " " : r.rune; }).join(""));
+    }
+
+    stone.setAttribute("aria-label", joinNames(names) + " written in runes: " + lines.map(function (runes) {
+      return runes.map(function (r) { return r.gap ? " " : r.rune; }).join("");
+    }).join(", "));
     const hail = $("#crown-hail");
     hail.style.setProperty("--hail-delay", (n * STEP + 300) + "ms");
-    hail.textContent = CROWN.hail.replace("{name}", clean);
+    hail.textContent = clanText(names.length > 1 ? CROWN.hailMany : CROWN.hail).replace("{name}", joinNames(names));
     $("#crown-form").hidden = true;
     $("#crown-result").hidden = false;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -784,6 +928,8 @@
     $("#crown-name").value = "";
     AudioPlayer.stop();
     setProgress(0);
+    state.clan = null;
+    applyClan();
     state.drawnProgress = null;
     renderMap();
     setStatus("");
@@ -801,7 +947,19 @@
     const el = e.target.closest("[data-action]");
     if (!el) return;
     switch (el.getAttribute("data-action")) {
-      case "play": showScreen("map"); break;
+      case "play":
+        if (state.clan) showScreen("map");
+        else { renderClanScreen(); showScreen("clan"); }
+        break;
+      case "pick-clan": pickClan(el.getAttribute("data-clan")); break;
+      case "clan-less": state.members--; renderMembers(); break;
+      case "clan-more": state.members++; renderMembers(); break;
+      case "clan-go":
+        if (!state.clan) break;
+        renderMap();
+        showScreen("map");
+        setStatus("We ride for the " + state.clan.name + "!");
+        break;
       case "home": showScreen("start"); break;
       case "settings": showScreen("settings"); break;
       case "back": showScreen(state.previous && state.previous !== "settings" ? state.previous : "start"); break;
@@ -827,7 +985,7 @@
         break;
       case "crown-again":
         resetCrownForm();
-        $("#crown-name").value = "";
+        nameInputs().forEach(function (inp) { inp.value = ""; });
         $("#crown-name").focus();
         break;
       case "ask-reset": askReset(el); break;
@@ -854,9 +1012,16 @@
   $("#overlay").addEventListener("click", function () { hideOverlay(true); });
   $("#crown-form").addEventListener("submit", function (e) {
     e.preventDefault();
-    carveName($("#crown-name").value);
+    carveNames(nameInputs().map(function (inp) { return inp.value; }));
   });
-  $("#crown-name").addEventListener("input", function () { $("#crown-error").textContent = ""; });
+  $("#crown-names").addEventListener("input", function () { $("#crown-error").textContent = ""; });
+  // Enter in a name field jumps to the next one; the last one carves.
+  $("#crown-names").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    const inputs = nameInputs();
+    const i = inputs.indexOf(e.target);
+    if (i >= 0 && i < inputs.length - 1) { e.preventDefault(); inputs[i + 1].focus(); }
+  });
   // The unlock animation can't be skipped: swallow every tap/key while it plays.
   ["click", "pointerdown", "touchstart", "contextmenu"].forEach(function (type) {
     $("#unlockfx").addEventListener(type, function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });

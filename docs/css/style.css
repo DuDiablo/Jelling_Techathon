@@ -1022,6 +1022,63 @@ html:has(body.is-night) { background-color: var(--jg-night); }
 
 /* ---------- 4.5 Settings ---------- */
 .screen--settings { gap: var(--s2); }
+
+/* ---------- 4.x Choose your house (clan + members) ---------- */
+.screen--clan { gap: var(--s2); }
+.clan { display: flex; flex-direction: column; gap: var(--s2); }
+.clan__list { margin: 0; }
+.clan__choice { padding-right: var(--s1); }
+.clan__choice .choice__seal { font-family: var(--font-rune); font-size: 1.6rem; color: #fbf1d8; }
+.clan__choice .choice__state { font-size: .9rem; }
+.clan__choice.is-picked {
+  border-color: var(--seal-color);
+  background: rgba(255, 249, 232, .92);
+  box-shadow: 0 0 0 2px var(--seal-color), var(--shadow-sm);
+}
+.clan__tick {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(90, 70, 50, .45);
+  color: transparent;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.clan__tick svg { width: 16px; height: 16px; }
+.clan__choice.is-picked .clan__tick { background: var(--seal-color); border-color: var(--seal-color); color: #fff; }
+
+.clan__count { display: flex; flex-direction: column; align-items: center; gap: var(--s1); padding-top: var(--s1); border-top: 1px solid rgba(90, 70, 50, .25); }
+.clan__ask { font-family: var(--font-head); font-weight: 700; color: var(--ink); }
+.stepper { display: flex; align-items: center; gap: var(--s2); }
+.stepper__btn {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--parchment-light);
+  background: var(--ink);
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 3px rgba(201, 161, 74, .7), var(--shadow-sm);
+  cursor: pointer;
+}
+.stepper__btn:active:not(:disabled) { transform: translateY(1px); }
+.stepper__btn:disabled { opacity: .35; cursor: default; }
+.stepper__value { min-width: 2ch; text-align: center; font-family: var(--font-title); font-weight: 700; font-size: 2rem; color: var(--ink); }
+.clan__people {
+  min-height: 1.6em;
+  font-family: var(--font-rune);
+  font-size: 1.35rem;
+  letter-spacing: .1em;
+  color: var(--clan, var(--ink-soft));
+  transition: color .3s;
+}
+.clan__go:disabled { opacity: .5; cursor: default; }
 .setting {
   display: flex;
   align-items: center;
@@ -1334,6 +1391,7 @@ html:has(body.is-night) { background-color: var(--jg-night); }
   animation: riseIn 1.1s var(--ease-settle) 1.9s both;
 }
 .crown__form { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
+.crown__names { display: flex; flex-direction: column; align-items: center; gap: var(--s1); width: 100%; }
 .crown__ask { font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; color: var(--blood); }
 .crown__input {
   width: 100%;
@@ -1411,11 +1469,12 @@ html:has(body.is-night) { background-color: var(--jg-night); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 34px;
+  min-width: calc(var(--rune-fs, 2.7rem) * .78);
 }
+.rune-break { flex-basis: 100%; height: 0; }
 .rune-cell__rune {
   font-family: var(--font-rune);
-  font-size: 2.7rem;
+  font-size: var(--rune-fs, 2.7rem);
   line-height: 1.15;
   color: var(--jg-red);
   -webkit-text-stroke: .9px currentColor;   /* chunkier strokes, like a chisel cut */
@@ -1545,7 +1604,7 @@ html:has(body.is-night) { background-color: var(--jg-night); }
   text-transform: uppercase;
   color: var(--moss);
 }
-.chooser, .sheet__panel { --seal-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M94.5 50L96.3 58.2L93.7 65.9L90.7 73.5L85.2 79.6L80.2 86L72.8 89.4L66.1 94.2L57.8 94.3L50 97L42.3 93.8L33.9 94.2L26.8 90.3L19.8 86L14.8 79.6L9.3 73.5L7.2 65.6L3.7 58.2L5 50L3.7 41.8L8.2 34.8L9.3 26.5L14.4 20.1L19.8 14L27 10.2L33.9 5.8L42.1 5.2L50 3L57.8 5.7L66.1 5.8L72.3 11.5L80.2 14L85.6 20.1L90.7 26.5L93.2 34.3L96.3 41.8Z'/%3E%3C/svg%3E"); }
+.chooser, .sheet__panel, .clan { --seal-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M94.5 50L96.3 58.2L93.7 65.9L90.7 73.5L85.2 79.6L80.2 86L72.8 89.4L66.1 94.2L57.8 94.3L50 97L42.3 93.8L33.9 94.2L26.8 90.3L19.8 86L14.8 79.6L9.3 73.5L7.2 65.6L3.7 58.2L5 50L3.7 41.8L8.2 34.8L9.3 26.5L14.4 20.1L19.8 14L27 10.2L33.9 5.8L42.1 5.2L50 3L57.8 5.7L66.1 5.8L72.3 11.5L80.2 14L85.6 20.1L90.7 26.5L93.2 34.3L96.3 41.8Z'/%3E%3C/svg%3E"); }
 
 .sheet__hint {
   display: flex;
