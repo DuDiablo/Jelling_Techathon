@@ -685,7 +685,11 @@ body.has-map-bg.is-mapbg .app::before {
 }
 
 .map-actions { display: flex; flex-direction: column; align-items: center; gap: var(--s1); }
-.btn--nfc { background: var(--blood); box-shadow: inset 0 0 0 3px var(--blood), inset 0 0 0 4px rgba(230, 199, 122, .8), var(--shadow); margin-bottom: var(--s1); }
+.btn--nfc { gap: var(--s1); background: rgba(255, 249, 232, .6); }
+.btn--nfc.is-on { border-color: var(--moss); color: var(--moss); opacity: 1; cursor: default; }
+.btn--nfc.is-on .btn__icon { animation: nfcPulse 1.8s var(--ease-glide, ease-in-out) infinite; }
+@keyframes nfcPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .btn--nfc.is-on .btn__icon { animation: none; } }
 
 .debug {
   width: 100%;

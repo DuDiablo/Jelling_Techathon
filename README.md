@@ -39,7 +39,7 @@ Techathon 2026 · Kongernes Jelling, Denmark · Theme: *Connecting people, place
    - **Rune already collected:** an **"Already collected"** note appears.
 5. After rune 3's story, the **finale** shows ᚼ and ᛒ merging into one.
 
-**iPhone / no Bluetooth:** each rune has an NFC sticker that opens `…/?rune=1`, `=2` or `=3`, which shows a **Hear rune N** button (see the note on [saving progress](#settings-for-testing)).
+**NFC tags (any phone, also iPhone):** each rune has an NFC sticker. Tapping it works exactly like pressing the rune (unlock, "Not yet" or "Already collected"); see [NFC tags](#nfc-tags). The LED only reacts to Bluetooth.
 
 ## Hardware ↔ app protocol
 
@@ -89,8 +89,10 @@ At the top of [docs/js/app.js](docs/js/app.js):
 const PERSIST_PROGRESS = false;
 ```
 
-- `false` (current): every page refresh starts the quest from 0 / 3. Good for demos and testing.
-- `true`: collected runes are remembered. **Needed for the NFC stickers**, because each tag tap opens a fresh page.
+- `false` (current): a normal page refresh starts the quest from 0 / 3. Good for demos and testing.
+- `true`: a normal refresh also continues the visit.
+
+NFC tags don't need this switch: a page opened from a tag always continues the saved visit (progress, house, clan size, quest timer). It's saved on the phone and forgotten after 6 hours or on **Reset quest**.
 
 In the app, **Settings** has a "Show story text" switch and **Reset quest**.
 
@@ -103,7 +105,8 @@ docs/                  ← the web app (GitHub Pages serves this folder)
   js/content.js        texts, rooms, map positions  ← content person edits this
   js/ble.js            Web Bluetooth: connect, notifications, LED, reconnect
   js/audio.js          MP3 playback with text-to-speech fallback
-  js/app.js            game state, screens, chooser, overlays, NFC + debug
+  js/app.js            game state, screens, chooser, overlays, NFC tags + debug
+  js/keepsakes.js      take-home images: rune stone, certificate, alphabet card
   audio/README.md      expected audio file names
   decisions.md         decision log (note: public on GitHub Pages)
 design/  src/          placeholders
@@ -117,8 +120,29 @@ GitHub Pages is on: **Settings → Pages → `main` → `/docs`**. Every merge t
 
 **After changing CSS or JS:** bump the `?v=…` number on the `<link>` / `<script>` tags in `docs/index.html` (e.g. `?v=20261114-2`). Otherwise browsers and phones may keep an old cached file, and a mix of old and new files can stop the app from starting. If an app on your laptop acts strange after an update, press **Ctrl + Shift + R**.
 
-**NFC stickers** (write with the NFC Tools app):
-`https://dudiablo.github.io/Jelling_Techathon/?rune=1` (and `=2`, `=3`)
+## NFC tags
+
+Each rune gets one NFC sticker (NTAG213 or NTAG215) holding a **URL record**:
+
+| Tag | URL |
+|---|---|
+| Rune 1 ᚲ (Fire Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=1` |
+| Rune 2 ᚺ (Yggdrasil Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=2` |
+| Rune 3 ᛒ (Rune Stone Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=3` |
+
+**Writing a tag** with the free **NFC Tools** app (Android or iPhone):
+1. **Write** → **Add a record** → **URL / URI**, paste the URL for that rune, then **OK**
+2. Tap **Write** and hold the phone on the sticker until it says it's done
+3. Test it with a second phone. If it's right, lock it: **Other** → **Lock tag** (permanent, so do this last)
+
+**Placing:** stick the tag on or inside the 3D print where visitors will tap. Keep it a few mm away from the ESP32 and its battery, because metal weakens NFC. Label the stickers 1, 2 and 3 before writing so they don't get mixed up.
+
+**How the app uses them:**
+- **Any phone:** tapping a tag opens the link. The app continues the saved visit and treats it as pressing that rune.
+  - On the first tag of a visit it first asks the visitor to choose a house, then wakes the rune.
+- **Chrome on Android:** on the map, tap **Scan NFC tags** once and allow NFC. The app then reads tags while it's open, with no new page.
+  - Android remembers the permission, so next time scanning starts by itself.
+- **LED:** a tag can't light the rune's LED. Only a Bluetooth press does that.
 
 ## Test checklist (real hardware)
 
@@ -129,7 +153,8 @@ GitHub Pages is on: **Settings → Pages → `main` → `/docs`**. Every merge t
 - [ ] After rune 3 → story, then finale
 - [ ] Phone stays connected across presses; a dropped rune shows a reconnect message
 - [ ] Second visit: "Paired" runes reconnect without Chrome's window (if supported)
-- [ ] NFC tags open the right rune (with `PERSIST_PROGRESS = true`)
+- [ ] Each NFC tag opens the right rune (first tag asks for the house; later tags keep progress)
+- [ ] Android: **Scan NFC tags** → tapping tags in order unlocks them without a new page
 - [ ] Full walk-through 3× without errors
 
 ## Getting started in 2 minutes (git)

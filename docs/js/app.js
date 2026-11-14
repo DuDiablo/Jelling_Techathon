@@ -1,6 +1,6 @@
 /* =====================================================================
    HARALD'S QUEST — APP
-   Game state, screens, overlays, NFC (?rune=N) and debug (?debug=1).
+   Game state, screens, overlays, NFC tags (?rune=N links + Web NFC) and debug (?debug=1).
    Texts live in content.js, Bluetooth in ble.js, audio in audio.js.
    ===================================================================== */
 
@@ -12,6 +12,10 @@
   // true  = collected runes are remembered after a refresh. NOTE: the NFC
   //         fallback (?rune=N) opens a fresh page per tag, so it needs true.
   const PERSIST_PROGRESS = false;
+  // The visit (progress, house, clan size, quest timer) is saved on the phone so NFC tags work:
+  // every scanned tag link opens a new page, which picks the visit up again.
+  const KEY_VISIT = "haraldVisit";
+  const VISIT_MAX_AGE_MS = 6 * 60 * 60 * 1000; // a visit older than 6 hours starts fresh
   const KEY_SHOW_TEXT = "haraldShowText";
   const KEY_RATE = "haraldAudioRate";
   const OVERLAY_MS = 4000;
@@ -52,6 +56,36 @@
   function setProgress(n) {
     state.progress = clampProgress(n);
     if (PERSIST_PROGRESS) save(KEY_PROGRESS, state.progress);
+    saveVisit();
+  }
+
+  function saveVisit() {
+    save(KEY_VISIT, JSON.stringify({
+      progress: state.progress,
+      clan: state.clan ? state.clan.id : null,
+      members: state.members,
+      startedAt: state.startedAt,
+      finishedAt: state.finishedAt,
+      savedAt: Date.now()
+    }));
+  }
+  function loadVisit() {
+    try {
+      const v = JSON.parse(load(KEY_VISIT));
+      if (!v || Date.now() - (v.savedAt || 0) > VISIT_MAX_AGE_MS) return null;
+      return v;
+    } catch (e) { return null; }
+  }
+  function clearVisit() {
+    try { localStorage.removeItem(KEY_VISIT); } catch (e) { /* ignore */ }
+  }
+  function restoreVisit(v) {
+    state.progress = clampProgress(v.progress);
+    state.clan = CLANS.find(function (c) { return c.id === v.clan; }) || null;
+    state.members = v.members || state.members;
+    state.startedAt = v.startedAt || 0;
+    state.finishedAt = v.finishedAt || 0;
+    applyClan();
   }
   function isComplete() { return state.progress >= RUNES.length; }
 
@@ -723,7 +757,7 @@
     $("#finale-title").textContent = FINISHED.title;
     $("#finale-text").textContent = FINISHED.text;
     finaleShownAt = Date.now();
-    if (!state.finishedAt) state.finishedAt = finaleShownAt;
+    if (!state.finishedAt) { state.finishedAt = finaleShownAt; saveVisit(); }
     finaleAutoCrown = true;
     showScreen("finale");
     AudioPlayer.play(FINISHED.audio, FINISHED.text);
@@ -1005,10 +1039,86 @@
     state.startedAt = 0;
     state.finishedAt = 0;
     state.carved = null;
+    pendingTagRune = null;
+    clearVisit();
     state.drawnProgress = null;
     renderMap();
     setStatus("");
     showScreen("start");
+  }
+
+  /* ---------------- NFC tags ----------------
+     Each rune has a tag holding the link …/?rune=N.
+     - Any phone: scanning opens that link; init() treats it exactly like pressing the rune.
+     - Chrome on Android: "Scan NFC tags" (Web NFC) reads tags while the app is open,
+       without opening a new page. Both go through onRunePress(), like a Bluetooth press. */
+  let pendingTagRune = null;   // tag scanned before a house was chosen
+  let nfcOn = false;
+
+  function nfcSupported() { return "NDEFReader" in window; }
+
+  function runeIdFromTag(message) {
+    for (const record of message.records) {
+      try {
+        let text;
+        if (record.recordType === "url" || record.recordType === "absolute-url") {
+          text = new TextDecoder().decode(record.data);
+          const n = parseInt(new URL(text, location.href).searchParams.get("rune"), 10);
+          if (n) return n;
+        } else if (record.recordType === "text") {
+          text = new TextDecoder(record.encoding || "utf-8").decode(record.data);
+          const m = /(?:RUNE_?)?(\d)/i.exec(text.trim()); // "RUNE_1" or "1"
+          if (m) return parseInt(m[1], 10);
+        }
+      } catch (e) { /* try the next record */ }
+    }
+    return 0;
+  }
+
+  async function startNfc(fromTap) {
+    if (!nfcSupported() || nfcOn) return;
+    try {
+      const reader = new NDEFReader();
+      await reader.scan();
+      nfcOn = true;
+      reader.addEventListener("reading", function (e) {
+        const id = runeIdFromTag(e.message);
+        if (!RUNES.some(function (r) { return r.id === id; })) { setStatus("This tag isn't one of the runes.", true); return; }
+        if (!state.clan && state.screen !== "map") {
+          pendingTagRune = id;
+          renderClanScreen();
+          showScreen("clan");
+          return;
+        }
+        onRunePress(id, null);
+      });
+      reader.addEventListener("readingerror", function () { setStatus("Couldn't read that tag. Hold the phone still on it.", true); });
+      renderNfcButton();
+      if (fromTap) setStatus("NFC is on. Hold the back of your phone to a rune's tag.");
+    } catch (e) {
+      if (fromTap) {
+        setStatus(e && e.name === "NotAllowedError"
+          ? "NFC permission was refused. Allow it in Chrome's site settings."
+          : "NFC is off. Turn on NFC in your phone's settings and try again.", true);
+      }
+    }
+  }
+
+  function renderNfcButton() {
+    const btn = $("#nfc-btn");
+    btn.hidden = !nfcSupported();
+    btn.disabled = nfcOn;
+    btn.classList.toggle("is-on", nfcOn);
+    $("#nfc-text").textContent = nfcOn ? "NFC on: tap a rune's tag" : "Scan NFC tags";
+  }
+
+  /* Instant screen switch for a page opened from a tag (no fade on load). */
+  function jumpTo(name) {
+    $$(".screen").forEach(function (sc) { sc.hidden = true; sc.classList.remove("is-active"); });
+    $("#screen-" + name).hidden = false;
+    state.previous = "start";
+    state.screen = name;
+    afterEnter(name);
   }
 
   /* ---------------- Events ---------------- */
@@ -1027,14 +1137,22 @@
         else { renderClanScreen(); showScreen("clan"); }
         break;
       case "pick-clan": pickClan(el.getAttribute("data-clan")); break;
-      case "clan-less": state.members--; renderMembers(); break;
-      case "clan-more": state.members++; renderMembers(); break;
+      case "clan-less": state.members--; renderMembers(); saveVisit(); break;
+      case "clan-more": state.members++; renderMembers(); saveVisit(); break;
+      case "nfc": startNfc(true); break;
       case "clan-go":
         if (!state.clan) break;
         if (!state.startedAt) state.startedAt = Date.now();
+        saveVisit();
         renderMap();
         showScreen("map");
         setStatus("We ride for the " + state.clan.name + "!");
+        // A tag scanned before the house was chosen: wake that rune now.
+        if (pendingTagRune) {
+          const id = pendingTagRune;
+          pendingTagRune = null;
+          setTimeout(function () { onRunePress(id, null); }, reducedMotion ? 0 : 700);
+        }
         break;
       case "home": showScreen("start"); break;
       case "settings": showScreen("settings"); break;
@@ -1177,27 +1295,36 @@
 
     if (!RuneBLE.isSupported()) setStatus(NO_BLE_MSG, true);
 
-    // NFC fallback: ?rune=N shows a "Hear rune N" button (no Bluetooth needed).
-    const nfcId = parseInt(params.get("rune"), 10);
-    const nfcRune = RUNES.find(function (r) { return r.id === nfcId; });
-    if (nfcRune) {
-      const btn = $("#nfc-btn");
-      btn.textContent = "Hear rune " + nfcRune.id;
-      btn.hidden = false;
-      btn.addEventListener("click", function () {
-        btn.hidden = true;
-        params.delete("rune");
-        const qs = params.toString();
-        try { history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash); } catch (e) { /* ignore */ }
-        handleRune(nfcRune.id, null);
-      });
-      $("#screen-start").hidden = true;
-      $("#screen-start").classList.remove("is-active");
-      $("#screen-map").hidden = false;
-      state.screen = "map";
-      state.previous = "start";
-      animateMap();
-      setStatus("You found rune " + nfcRune.symbol + ". Tap the button to hear it.");
+    // NFC tag link (…/?rune=N): pick the saved visit up again and treat it like pressing that rune.
+    const tagId = parseInt(params.get("rune"), 10);
+    const tagRune = RUNES.find(function (r) { return r.id === tagId; });
+    if (tagRune || PERSIST_PROGRESS) {
+      const visit = loadVisit();
+      if (visit) restoreVisit(visit);
+    }
+    renderMap();
+    renderNfcButton();
+    // Already allowed NFC on this site? Start listening without another tap.
+    if (nfcSupported() && navigator.permissions) {
+      navigator.permissions.query({ name: "nfc" })
+        .then(function (p) { if (p.state === "granted") startNfc(false); })
+        .catch(function () { /* ignore */ });
+    }
+    if (tagRune) {
+      // Remove ?rune=N so a refresh doesn't scan the rune again.
+      params.delete("rune");
+      const qs = params.toString();
+      try { history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash); } catch (e) { /* ignore */ }
+      if (state.clan) {
+        jumpTo("map");
+        setTimeout(function () { onRunePress(tagRune.id, null); }, reducedMotion ? 0 : 500);
+      } else {
+        // First tag of the visit: choose a house first, then this rune wakes.
+        pendingTagRune = tagRune.id;
+        renderClanScreen();
+        jumpTo("clan");
+        $("#clan-label").textContent = "Choose your house to wake rune " + tagRune.symbol;
+      }
     }
     document.body.classList.add("is-mapbg"); // map background on every screen (the night veil covers it for the finale)
   }
