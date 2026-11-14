@@ -8,7 +8,7 @@
   <title>Harald's Quest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -128,6 +128,49 @@
         <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" stitchTiles="stitch"/>
         <feColorMatrix values="0 0 0 0 .17  0 0 0 0 .1  0 0 0 0 .07  0 0 0 1.4 -.35"/>
       </filter>
+
+      <!-- Bevel & emboss, style "Inner bevel / Down" (text pressed into parchment).
+           Layers: dark inner shadow on the top edge, light inner highlight on the
+           bottom edge, and a thin light lip just below the letters (outside).
+           -lg = big titles, -md = buttons/body, -sm = small labels, -dark = light text on dark. -->
+      <filter id="deboss-lg" x="-10%" y="-25%" width="120%" height="150%" color-interpolation-filters="sRGB">
+        <feComponentTransfer in="SourceAlpha" result="inv"><feFuncA type="table" tableValues="1 0"/></feComponentTransfer>
+        <feOffset in="inv" dy="2.6" result="o1"/><feGaussianBlur in="o1" stdDeviation="1.6" result="b1"/>
+        <feFlood flood-color="#1a0606" flood-opacity=".78"/><feComposite in2="b1" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="shade"/>
+        <feOffset in="inv" dy="-1.6" result="o2"/><feGaussianBlur in="o2" stdDeviation="1" result="b2"/>
+        <feFlood flood-color="#ffd7b3" flood-opacity=".5"/><feComposite in2="b2" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="light"/>
+        <feOffset in="SourceAlpha" dy="1.6" result="o3"/><feGaussianBlur in="o3" stdDeviation=".5" result="b3"/>
+        <feFlood flood-color="#fff4dc" flood-opacity=".75"/><feComposite in2="b3" operator="in"/><feComposite in2="SourceAlpha" operator="out" result="lip"/>
+        <feMerge><feMergeNode in="lip"/><feMergeNode in="SourceGraphic"/><feMergeNode in="shade"/><feMergeNode in="light"/></feMerge>
+      </filter>
+      <filter id="deboss-md" x="-8%" y="-30%" width="116%" height="160%" color-interpolation-filters="sRGB">
+        <feComponentTransfer in="SourceAlpha" result="inv"><feFuncA type="table" tableValues="1 0"/></feComponentTransfer>
+        <feOffset in="inv" dy="1.5" result="o1"/><feGaussianBlur in="o1" stdDeviation=".9" result="b1"/>
+        <feFlood flood-color="#120804" flood-opacity=".7"/><feComposite in2="b1" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="shade"/>
+        <feOffset in="inv" dy="-1" result="o2"/><feGaussianBlur in="o2" stdDeviation=".6" result="b2"/>
+        <feFlood flood-color="#fff0d6" flood-opacity=".45"/><feComposite in2="b2" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="light"/>
+        <feOffset in="SourceAlpha" dy="1" result="o3"/><feGaussianBlur in="o3" stdDeviation=".35" result="b3"/>
+        <feFlood flood-color="#fff4dc" flood-opacity=".7"/><feComposite in2="b3" operator="in"/><feComposite in2="SourceAlpha" operator="out" result="lip"/>
+        <feMerge><feMergeNode in="lip"/><feMergeNode in="SourceGraphic"/><feMergeNode in="shade"/><feMergeNode in="light"/></feMerge>
+      </filter>
+      <filter id="deboss-sm" x="-5%" y="-40%" width="110%" height="180%" color-interpolation-filters="sRGB">
+        <feComponentTransfer in="SourceAlpha" result="inv"><feFuncA type="table" tableValues="1 0"/></feComponentTransfer>
+        <feOffset in="inv" dy="1" result="o1"/><feGaussianBlur in="o1" stdDeviation=".55" result="b1"/>
+        <feFlood flood-color="#120804" flood-opacity=".6"/><feComposite in2="b1" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="shade"/>
+        <feOffset in="SourceAlpha" dy=".8" result="o3"/><feGaussianBlur in="o3" stdDeviation=".25" result="b3"/>
+        <feFlood flood-color="#fff4dc" flood-opacity=".7"/><feComposite in2="b3" operator="in"/><feComposite in2="SourceAlpha" operator="out" result="lip"/>
+        <feMerge><feMergeNode in="lip"/><feMergeNode in="SourceGraphic"/><feMergeNode in="shade"/></feMerge>
+      </filter>
+      <filter id="deboss-dark" x="-8%" y="-30%" width="116%" height="160%" color-interpolation-filters="sRGB">
+        <feComponentTransfer in="SourceAlpha" result="inv"><feFuncA type="table" tableValues="1 0"/></feComponentTransfer>
+        <feOffset in="inv" dy="1.6" result="o1"/><feGaussianBlur in="o1" stdDeviation=".9" result="b1"/>
+        <feFlood flood-color="#000" flood-opacity=".65"/><feComposite in2="b1" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="shade"/>
+        <feOffset in="inv" dy="-1" result="o2"/><feGaussianBlur in="o2" stdDeviation=".6" result="b2"/>
+        <feFlood flood-color="#fffaf0" flood-opacity=".55"/><feComposite in2="b2" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="light"/>
+        <feOffset in="SourceAlpha" dy="1" result="o3"/><feGaussianBlur in="o3" stdDeviation=".35" result="b3"/>
+        <feFlood flood-color="#B8860B" flood-opacity=".35"/><feComposite in2="b3" operator="in"/><feComposite in2="SourceAlpha" operator="out" result="lip"/>
+        <feMerge><feMergeNode in="lip"/><feMergeNode in="SourceGraphic"/><feMergeNode in="shade"/><feMergeNode in="light"/></feMerge>
+      </filter>
     </defs>
   </svg>
 
@@ -138,36 +181,17 @@
 
     <!-- ===================== 1. START ===================== -->
     <section class="screen screen--start is-active" id="screen-start" aria-labelledby="start-title">
-      <svg class="oldmap" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <defs>
-          <pattern id="latlong" width="50" height="50" patternUnits="userSpaceOnUse">
-            <path d="M50 0 V50 M0 50 H50" fill="none" stroke="currentColor" stroke-width=".8" stroke-dasharray="1 4"/>
-          </pattern>
-        </defs>
-        <rect width="400" height="700" fill="url(#latlong)"/>
-        <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-          <path d="M-10 120 C30 110, 50 140, 80 128 S130 90, 160 104 S210 150, 240 132 S300 80, 330 96 S380 120, 410 100"/>
-          <path d="M-10 136 C30 126, 50 156, 80 144 S130 106, 160 120 S210 166, 240 148 S300 96, 330 112 S380 136, 410 116" stroke-dasharray="2 5" opacity=".6"/>
-          <path d="M260 700 C250 640, 290 610, 270 560 S300 480, 340 470 S380 430, 410 440"/>
-          <path d="M246 700 C236 640, 276 610, 256 560 S286 480, 326 456 S372 418, 410 424" stroke-dasharray="2 5" opacity=".6"/>
-          <path d="M-10 520 C20 500, 60 530, 70 560 S50 640, 90 660 S120 700, 140 710"/>
-          <path d="M120 300 c10 -14, 30 -10, 34 2 s-6 22, -20 20 s-22 -8, -14 -22 Z"/>
-          <path d="M60 380 l6 -4 l5 3 l-2 6 l-7 1 Z"/>
-        </g>
-        <use href="#compass" x="300" y="560" width="80" height="80"/>
-      </svg>
-
       <div class="start__stack">
-        <p class="label label--ruled seq" style="--i:0">A Museum Quest</p>
-        <h1 class="title seq" id="start-title" style="--i:1">Harald’s<br>Quest</h1>
-        <svg class="knot seq" style="--i:2" aria-hidden="true"><use href="#knot"/></svg>
-        <p class="tagline seq" style="--i:3">Follow the map. Uncover the story.</p>
-        <div class="stack-actions seq" style="--i:4">
-          <button class="btn btn--primary" type="button" data-action="play">Play game</button>
-          <button class="btn btn--ghost" type="button" data-action="settings">Settings</button>
+        <div class="start__head">
+          <p class="start__label deboss-sm seq" style="--i:0">A MUSEUM QUEST</p>
+          <h1 class="title deboss-lg seq" id="start-title" style="--i:1">Harald's Quest</h1>
+          <p class="tagline deboss seq" style="--i:2">Follow the map. Uncover the story.</p>
         </div>
+        <nav class="start__nav seq" style="--i:3" aria-label="Main menu">
+          <button class="menu-btn menu-btn--primary" type="button" data-action="play"><span class="deboss-on-dark">Play Game</span></button>
+          <button class="menu-btn menu-btn--secondary" type="button" data-action="settings"><span class="deboss">Settings</span></button>
+        </nav>
       </div>
-      <footer class="label start__footer">Kongernes Jelling · Techathon 2026</footer>
     </section>
 
     <!-- ===================== 2. QUEST MAP ===================== -->
