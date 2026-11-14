@@ -77,7 +77,7 @@ Only edit **[docs/js/content.js](docs/js/content.js)**: rune names, rooms, hints
 
 **Optional assets** (shown automatically if present):
 - `docs/assets/bluetooth-logo.svg`: official logo on the finale screen
-- `docs/assets/map-bg.jpg`: start screen background, instead of the drawn map lines
+- `docs/assets/map-bg.png`: antique map behind the start screen (included; remove it for a plain background)
 
 ## Settings for testing
 

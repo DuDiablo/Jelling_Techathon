@@ -65,6 +65,7 @@
     state.previous = state.screen;
     state.screen = name;
     document.body.classList.toggle("is-finale", name === "finale");
+    document.body.classList.toggle("is-start", name === "start");
 
     to.hidden = false;
     to.classList.add("is-entering");
@@ -650,13 +651,14 @@
     logo.addEventListener("error", function () { logo.hidden = true; });
     if (logo.complete && logo.naturalWidth > 0) logo.hidden = false;
 
-    // Old-map background: use docs/assets/map-bg.jpg instead of the drawn linework if it exists.
+    // Antique map behind the start screen (docs/assets/map-bg.png); skipped if the file is missing.
     const img = new Image();
     img.onload = function () {
-      document.body.style.setProperty("--map-bg", "url('assets/map-bg.jpg')");
+      // Absolute URL: a relative one would resolve against css/style.css.
+      document.body.style.setProperty("--map-bg", "url('" + img.src + "')");
       document.body.classList.add("has-map-bg");
     };
-    img.src = "assets/map-bg.jpg";
+    img.src = "assets/map-bg.png";
   }
 
   /* ---------------- Helpers ---------------- */
@@ -700,6 +702,7 @@
       animateMap();
       setStatus("You found rune " + nfcRune.symbol + ". Tap the button to hear it.");
     }
+    document.body.classList.toggle("is-start", state.screen === "start");
   }
 
   init();

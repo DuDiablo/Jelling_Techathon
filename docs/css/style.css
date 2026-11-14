@@ -381,79 +381,123 @@ body.is-finale .vignette {
 .screen.is-entering { animation: screenIn var(--t-screen) var(--ease) both; }
 .screen.is-leaving { animation: screenOut var(--t-screen) var(--ease) both; pointer-events: none; }
 
-/* ---------- 4.1 Start ---------- */
+/* ---------- 4.1 Start (matches "Harald's Quest – Main Menu" design, 390×844) ---------- */
 .screen--start {
   position: relative;
   justify-content: center;
   align-items: center;
   text-align: center;
   min-height: calc(100dvh - var(--s2) - var(--s3) - var(--safe-t) - var(--safe-b));
+  color: #2B1A10;
 }
-.oldmap {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  color: var(--ink);
-  opacity: .15;
-  pointer-events: none;
-  z-index: -1;
+/* Design background: warm radial parchment (vignette + grain are off on this screen) */
+@media (max-width: 599px) {
+  body.is-start {
+    background-color: #D8BF94;
+    background-image: radial-gradient(ellipse at center, #E2CDA3 0%, #D8BF94 55%, #B89A68 100%);
+  }
+  html:has(body.is-start) { background-color: #D8BF94; }
 }
-body.has-map-bg .oldmap { display: none; }
+/* Tablets / desktops / landscape: same gradient on the journal page */
+@media (min-width: 600px) {
+  body.is-start .app { background-image: radial-gradient(ellipse at center, #E2CDA3 0%, #D8BF94 55%, #B89A68 100%); }
+}
+body.is-start .vignette, body.is-start .grain { display: none; }
+/* Antique map, 18% opacity: 846×847 at x −159 on a 390 canvas (= centre + 69px) */
 body.has-map-bg .screen--start::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
-  background: var(--map-bg) center / cover no-repeat;
-  opacity: .22;
-  mix-blend-mode: multiply;
+  z-index: 0;
+  pointer-events: none;
+  background: #5a3a22 var(--map-bg) calc(50% + 69px) 0 / auto max(847px, 100%) no-repeat;
+  opacity: .18;
 }
 .start__stack {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s2);
+  gap: 56px;
   width: 100%;
+  margin-top: 88px; /* design's 80px + 8px to offset the page's uneven top/bottom padding */
 }
-.label--ruled {
+.start__head {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--s2);
-  width: 100%;
-  max-width: 320px;
-  justify-content: center;
-  color: var(--ink-soft);
-  padding-left: var(--ls-label); /* optically balance trailing letter-spacing */
+  gap: 12px;
+  padding: 0 16px; /* + the page's 16px gutter = the design's 32px */
+  line-height: normal;
 }
-.label--ruled::before, .label--ruled::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold));
+.start__label {
+  font-family: "Cinzel", serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 5px;
+  color: #5A3A22;
 }
-.label--ruled::after { background: linear-gradient(90deg, var(--gold), transparent); }
 .title {
-  font-family: var(--font-title);
-  font-size: var(--fs-title);
+  margin: 0;
+  width: min(326px, 100%);
+  font-family: "Cinzel Decorative", "Cinzel", serif;
   font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: .02em;
-  color: var(--blood);
-  text-transform: uppercase;
-  text-shadow: 0 1px 0 rgba(255, 244, 220, .75), 0 -1px 0 rgba(60, 10, 10, .35);
+  font-size: clamp(2.6rem, 14vw, 54px);
+  line-height: 1.05;
+  color: #7A1F1F;
+  text-align: center;
 }
-.tagline { font-style: italic; font-size: 1.15rem; color: var(--ink-soft); }
-.start__stack .stack-actions { margin-top: var(--s3); }
-.start__footer {
-  position: absolute;
-  bottom: 0;
-  left: 0; right: 0;
-  font-size: .62rem;
-  letter-spacing: .3em;
-  opacity: .7;
+.tagline {
+  font-style: italic;
+  font-weight: 500;
+  font-size: 20px;
+  color: #2B1A10;
+  text-align: center;
+}
+.start__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: min(280px, 100%);
+}
+.menu-btn {
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: 2px;
+  border-radius: 0;
+  cursor: pointer;
+  transition: filter .15s, transform .12s;
+}
+.menu-btn:hover { filter: brightness(1.15); }
+.menu-btn:active { transform: translateY(1px); }
+.menu-btn:focus-visible { outline: 3px solid #B8860B; outline-offset: 3px; }
+.menu-btn--primary {
+  font-size: 22px;
+  color: #F1E4C8;
+  background: #2B1A10;
+  border: 2px solid #B8860B;
+  padding: 16px 24px;
+  min-height: 60px;
+}
+.menu-btn--secondary {
+  font-size: 20px;
+  color: #2B1A10;
+  background: rgba(43, 26, 16, .06);
+  border: 2px solid #2B1A10;
+  padding: 14px 24px;
+  min-height: 56px;
 }
 .seq { animation: fadeUp .6s var(--ease) both; animation-delay: calc(var(--i) * 80ms + 80ms); }
+
+/* Bevel & emboss, "Down" (pressed into the parchment) — SVG filters in index.html.
+   Use .deboss on any text: -lg for big titles, -sm for small labels. The filter
+   is applied to the text element itself, so wrap button labels in a <span>. */
+.deboss { filter: url(#deboss-md); }
+.deboss-lg { filter: url(#deboss-lg); }
+.deboss-sm { filter: url(#deboss-sm); }
+.deboss-on-dark { filter: url(#deboss-dark); }
 
 /* ---------- 4.2 Quest map ---------- */
 .screen--map { gap: var(--s2); }
@@ -997,8 +1041,7 @@ body.is-finale {
 }
 
 @media (max-height: 640px) and (orientation: portrait) {
-  .start__stack { gap: 12px; }
-  .start__stack .stack-actions { margin-top: var(--s1); }
+  .start__stack { gap: 32px; margin-top: 40px; }
   .medallion-wrap { width: 120px; height: 120px; }
   .medallion__glyph { font-size: 3.6rem; }
 }
@@ -1050,8 +1093,7 @@ body.is-finale {
   body.is-finale .app::after { box-shadow: inset 0 0 120px 30px rgba(43, 20, 8, .6), inset 0 0 24px rgba(30, 14, 6, .5); }
 
   .screen--start { min-height: calc(100dvh - 2 * var(--s4) - var(--s5) - var(--s4)); }
-  .oldmap { position: absolute; z-index: -1; }
-  body.has-map-bg .screen--start::before { position: absolute; }
+  body.has-map-bg .screen--start::before { position: absolute; background-size: cover; background-position: center; }
   .overlay__note { max-width: 520px; }
   .mapcard { max-width: calc(54dvh * .8); max-height: 54dvh; }
 }
@@ -1084,11 +1126,13 @@ body.is-finale {
   .app { max-width: 920px; margin: 0 auto; min-height: 100dvh; padding: calc(var(--s1) + var(--safe-t)) calc(var(--s3) + var(--safe-r)) calc(var(--s2) + var(--safe-b)) calc(var(--s3) + var(--safe-l)); border-radius: 0; }
   .vignette { display: block; }
   :root { --fs-title: 2.4rem; }
+  .title { font-size: 2.4rem; width: auto; }
+  .tagline { font-size: 17px; }
   .screen--start { min-height: calc(100dvh - var(--s3) - var(--safe-t) - var(--safe-b)); }
-  .start__stack { gap: var(--s1); }
-  .start__stack .stack-actions { flex-direction: row; justify-content: center; margin-top: var(--s1); }
-  .start__stack .stack-actions .btn { max-width: 220px; }
-  .start__footer { position: static; margin-top: var(--s1); }
+  .start__stack { gap: var(--s2); margin-top: 0; }
+  .start__head { gap: 4px; }
+  .start__nav { flex-direction: row; width: min(560px, 100%); }
+  .start__nav .menu-btn { flex: 1; }
 
   .screen--map {
     display: grid;
