@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
   <!-- VERSION: bump ?v=… on the CSS + JS links below after changing them, so phones and browsers load the new files instead of an old cached copy. -->
-  <link rel="stylesheet" href="css/style.css?v=20261114-2">
+  <link rel="stylesheet" href="css/style.css?v=20261114-3">
 </head>
 <body>
 
@@ -134,6 +134,45 @@
       <filter id="grain-filter">
         <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3" stitchTiles="stitch"/>
         <feColorMatrix values="0 0 0 0 .17  0 0 0 0 .1  0 0 0 0 .07  0 0 0 1.4 -.35"/>
+      </filter>
+
+      <!-- ===== Rune stone ===== -->
+      <!-- Boulder outline (scales with the stone): uneven hewn top, flat base in the ground. -->
+      <clipPath id="stone-clip" clipPathUnits="objectBoundingBox">
+        <path d="M.05 .99 C.015 .82 0 .6 .035 .4 C.07 .2 .2 .06 .38 .025 C.47 .005 .55 0 .63 .02 C.78 .055 .9 .15 .955 .32 C.995 .46 1 .7 .965 .99 Z"/>
+      </clipPath>
+      <!-- Granite: relief lit from the top-left, dark mica specks, pale feldspar specks, faint lichen. -->
+      <filter id="granite" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency=".013 .019" numOctaves="4" seed="11" result="big"/>
+        <feDiffuseLighting in="big" surfaceScale="5" diffuseConstant="1.18" lighting-color="#ffffff" result="relief">
+          <feDistantLight azimuth="235" elevation="50"/>
+        </feDiffuseLighting>
+        <feComposite in="SourceGraphic" in2="relief" operator="arithmetic" k1="1.12" k2="0" k3="0" k4="0" result="lit"/>
+        <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="21" result="n3"/>
+        <feColorMatrix in="n3" type="matrix" values="0 0 0 0 .74  0 0 0 0 .72  0 0 0 0 .46  0 0 0 2.7 -1.62" result="lichen"/>
+        <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n1"/>
+        <feColorMatrix in="n1" type="matrix" values="0 0 0 0 .2  0 0 0 0 .19  0 0 0 0 .18  0 0 0 -16 5.7" result="mica"/>
+        <feTurbulence type="fractalNoise" baseFrequency=".22" numOctaves="2" seed="17" result="n4"/>
+        <feColorMatrix in="n4" type="matrix" values="0 0 0 0 .42  0 0 0 0 .4  0 0 0 0 .38  0 0 0 4 -2.3" result="crystals"/>
+        <feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="9" result="n2"/>
+        <feColorMatrix in="n2" type="matrix" values="0 0 0 0 .82  0 0 0 0 .75  0 0 0 0 .72  0 0 0 16 -10.4" result="feldspar"/>
+        <feMerge result="tex"><feMergeNode in="lit"/><feMergeNode in="crystals"/><feMergeNode in="lichen"/><feMergeNode in="mica"/><feMergeNode in="feldspar"/></feMerge>
+        <feComposite in="tex" in2="SourceAlpha" operator="in"/>
+      </filter>
+      <!-- Chiselled rune: rough hand-cut edges, shadow inside the top of the groove,
+           light on its lower wall, and paint chipped away in places. -->
+      <filter id="carve-stone" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="2" seed="5" result="rough"/>
+        <feDisplacementMap in="SourceGraphic" in2="rough" scale="1.8" xChannelSelector="R" yChannelSelector="G" result="cut"/>
+        <feComponentTransfer in="cut" result="inv"><feFuncA type="table" tableValues="1 0"/></feComponentTransfer>
+        <feOffset in="inv" dy="1.8" result="o1"/><feGaussianBlur in="o1" stdDeviation=".9" result="b1"/>
+        <feFlood flood-color="#1a0b06" flood-opacity=".85"/><feComposite in2="b1" operator="in"/><feComposite in2="cut" operator="in" result="shade"/>
+        <feOffset in="inv" dy="-1.1" result="o2"/><feGaussianBlur in="o2" stdDeviation=".6" result="b2"/>
+        <feFlood flood-color="#f0d9c4" flood-opacity=".45"/><feComposite in2="b2" operator="in"/><feComposite in2="cut" operator="in" result="light"/>
+        <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="8" result="chips"/>
+        <feColorMatrix in="chips" type="matrix" values="0 0 0 0 .4  0 0 0 0 .37  0 0 0 0 .34  0 0 0 12 -7.3" result="chipMask"/>
+        <feComposite in="chipMask" in2="cut" operator="in" result="chipsIn"/>
+        <feMerge><feMergeNode in="cut"/><feMergeNode in="chipsIn"/><feMergeNode in="shade"/><feMergeNode in="light"/></feMerge>
       </filter>
 
       <!-- Bevel & emboss, style "Inner bevel / Down" (text pressed into parchment).
@@ -367,22 +406,123 @@
       <div class="crown__hero" aria-hidden="true">
         <div class="crown__rays"></div>
         <div class="crown__dust" id="crown-dust"></div>
-        <svg class="crown__icon" viewBox="0 0 120 92">
+        <!-- Forged gold circlet, seen slightly from above: inner rim, five pearl-tipped points, jewelled band. -->
+        <svg class="crown__icon" viewBox="0 0 200 150">
           <defs>
-            <linearGradient id="crown-gold" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#fbeab4"/>
-              <stop offset=".45" stop-color="#d9ad52"/>
-              <stop offset="1" stop-color="#8a6420"/>
+            <!-- polished gold: vertical light falloff on the points -->
+            <linearGradient id="crown-gold-v" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#fff2c4"/>
+              <stop offset=".22" stop-color="#f1cf72"/>
+              <stop offset=".48" stop-color="#c9952c"/>
+              <stop offset=".7" stop-color="#8c5f14"/>
+              <stop offset=".86" stop-color="#d5a446"/>
+              <stop offset="1" stop-color="#6f4a10"/>
             </linearGradient>
+            <!-- cylindrical band: dark at the sides, bright reflection left of centre -->
+            <linearGradient id="crown-gold-h" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#5e3f0c"/>
+              <stop offset=".1" stop-color="#a87a22"/>
+              <stop offset=".32" stop-color="#f3d98a"/>
+              <stop offset=".42" stop-color="#fff4cc"/>
+              <stop offset=".56" stop-color="#e2b95c"/>
+              <stop offset=".84" stop-color="#946619"/>
+              <stop offset="1" stop-color="#4e3409"/>
+            </linearGradient>
+            <linearGradient id="crown-inside" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#7a5413"/>
+              <stop offset="1" stop-color="#241604"/>
+            </linearGradient>
+            <radialGradient id="crown-ruby" cx=".35" cy=".3" r=".75">
+              <stop offset="0" stop-color="#ffc2b5"/>
+              <stop offset=".22" stop-color="#e5432f"/>
+              <stop offset=".62" stop-color="#8e160d"/>
+              <stop offset="1" stop-color="#330402"/>
+            </radialGradient>
+            <radialGradient id="crown-sapphire" cx=".35" cy=".3" r=".75">
+              <stop offset="0" stop-color="#cfe2ff"/>
+              <stop offset=".25" stop-color="#4b7bd8"/>
+              <stop offset=".65" stop-color="#173481"/>
+              <stop offset="1" stop-color="#060f2e"/>
+            </radialGradient>
+            <radialGradient id="crown-pearl" cx=".38" cy=".32" r=".7">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset=".45" stop-color="#f1ebdd"/>
+              <stop offset=".8" stop-color="#c8bda4"/>
+              <stop offset="1" stop-color="#8a7f66"/>
+            </radialGradient>
+            <!-- metal relief: specular light on the blurred shape, like a bevel -->
+            <filter id="crown-bevel" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="1.8" result="b"/>
+              <feSpecularLighting in="b" surfaceScale="4" specularConstant="1.05" specularExponent="22" lighting-color="#fff6d8" result="spec">
+                <feDistantLight azimuth="235" elevation="42"/>
+              </feSpecularLighting>
+              <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+              <feComposite in="SourceGraphic" in2="specIn" operator="arithmetic" k1="0" k2="1" k3=".8" k4="0"/>
+            </filter>
           </defs>
-          <path d="M12 72 L6 24 L34 48 L60 8 L86 48 L114 24 L108 72 Z" fill="url(#crown-gold)" stroke="#4a300c" stroke-width="2.4" stroke-linejoin="round"/>
-          <path d="M20 66 L16 38 L36 56 L60 22 L84 56 L104 38 L100 66" fill="none" stroke="#fff3cf" stroke-width="1.2" opacity=".55" stroke-linejoin="round"/>
-          <rect x="10" y="70" width="100" height="16" rx="2" fill="url(#crown-gold)" stroke="#4a300c" stroke-width="2.4"/>
-          <g fill="#7A1F1F" stroke="#4a300c" stroke-width="1.4">
-            <circle cx="6" cy="24" r="5.5"/><circle cx="60" cy="8" r="6.5"/><circle cx="114" cy="24" r="5.5"/>
-            <circle cx="34" cy="78" r="4"/><circle cx="86" cy="78" r="4"/>
+
+          <!-- inside of the crown (far rim), visible between the points -->
+          <path d="M14 96 Q100 76 186 96 Q100 112 14 96 Z" fill="url(#crown-inside)"/>
+          <path d="M14 96 Q100 76 186 96" fill="none" stroke="#c99a3a" stroke-width="2.2"/>
+
+          <!-- points -->
+          <g filter="url(#crown-bevel)" fill="url(#crown-gold-v)" stroke="#4a300c" stroke-width="1.3" stroke-linejoin="round">
+            <path d="M15 104 C19 88 24 75 27 60 C30 75 34 88 39 104 Z"/>
+            <path d="M161 104 C166 88 170 75 173 60 C176 75 181 88 185 104 Z"/>
+            <path d="M43 108 C49 88 55 64 60 44 C65 64 71 88 77 108 Z"/>
+            <path d="M123 108 C129 88 135 64 140 44 C145 64 151 88 157 108 Z"/>
+            <path d="M82 110 C89 90 95 48 100 26 C105 48 111 90 118 110 Z"/>
           </g>
-          <path d="M57 74 V84 M57 76 L54 73.5 M57 79 L54 76.5 M63 74 V84 M63 74 L66 77 L63 79 L66 81.5 L63 84" fill="none" stroke="#4a300c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- engraved ridge down each point -->
+          <g fill="none" stroke="#fff3cc" stroke-width=".9" opacity=".55" stroke-linecap="round">
+            <path d="M100 36 V60 M100 82 V100 M60 52 V96 M140 52 V96 M27 66 V94 M173 66 V94"/>
+          </g>
+          <!-- ruby on the centre point -->
+          <ellipse cx="100" cy="71" rx="7" ry="8.6" fill="#7a5312" stroke="#3d2706" stroke-width="1"/>
+          <ellipse cx="100" cy="71" rx="5.2" ry="6.8" fill="url(#crown-ruby)"/>
+          <ellipse cx="98.3" cy="68.4" rx="1.6" ry="2.2" fill="#fff" opacity=".75"/>
+          <!-- pearls -->
+          <g fill="url(#crown-pearl)" stroke="#7d725a" stroke-width=".6">
+            <circle cx="100" cy="24" r="6.5"/>
+            <circle cx="60" cy="42" r="5.5"/>
+            <circle cx="140" cy="42" r="5.5"/>
+            <circle cx="27" cy="58" r="4.5"/>
+            <circle cx="173" cy="58" r="4.5"/>
+          </g>
+
+          <!-- the band -->
+          <path d="M14 96 Q100 112 186 96 L186 124 Q100 142 14 124 Z" fill="url(#crown-gold-h)" stroke="#4a300c" stroke-width="1.4" filter="url(#crown-bevel)"/>
+          <g fill="none" stroke-linecap="round">
+            <path d="M17 99.5 Q100 115.5 183 99.5" stroke="#fff0b8" stroke-width=".9" opacity=".75"/>
+            <path d="M17 102 Q100 118 183 102" stroke="#5a3a0a" stroke-width=".7" opacity=".55"/>
+            <path d="M17 119.5 Q100 136.5 183 119.5" stroke="#5a3a0a" stroke-width=".7" opacity=".55"/>
+            <path d="M17 121.8 Q100 138.8 183 121.8" stroke="#fff0b8" stroke-width=".8" opacity=".6"/>
+          </g>
+          <!-- engraved diamonds between the stones -->
+          <g fill="none" stroke="#6b480f" stroke-width=".9" opacity=".7">
+            <path d="M81 114.5 L84 118 L81 121.5 L78 118 Z M119 114.5 L122 118 L119 121.5 L116 118 Z"/>
+            <path d="M47 111.5 L49.6 115 L47 118.5 L44.4 115 Z M153 111.5 L155.6 115 L153 118.5 L150.4 115 Z"/>
+          </g>
+          <!-- set stones: bezel, gem, glint -->
+          <g stroke="#3d2706" stroke-width="1">
+            <ellipse cx="100" cy="118.5" rx="10.6" ry="9" fill="#7a5312"/>
+            <ellipse cx="62" cy="116.7" rx="7.8" ry="7.2" fill="#7a5312"/>
+            <ellipse cx="138" cy="116.7" rx="7.8" ry="7.2" fill="#7a5312"/>
+            <ellipse cx="33" cy="113" rx="4.2" ry="5.2" fill="#7a5312"/>
+            <ellipse cx="167" cy="113" rx="4.2" ry="5.2" fill="#7a5312"/>
+          </g>
+          <ellipse cx="100" cy="118.5" rx="8.6" ry="7.2" fill="url(#crown-ruby)"/>
+          <ellipse cx="62" cy="116.7" rx="6" ry="5.6" fill="url(#crown-sapphire)"/>
+          <ellipse cx="138" cy="116.7" rx="6" ry="5.6" fill="url(#crown-sapphire)"/>
+          <ellipse cx="33" cy="113" rx="2.9" ry="3.8" fill="url(#crown-ruby)"/>
+          <ellipse cx="167" cy="113" rx="2.9" ry="3.8" fill="url(#crown-ruby)"/>
+          <g fill="#fff">
+            <ellipse cx="97" cy="115.6" rx="2.4" ry="1.7" opacity=".8"/>
+            <ellipse cx="60" cy="114.4" rx="1.7" ry="1.3" opacity=".75"/>
+            <ellipse cx="136" cy="114.4" rx="1.7" ry="1.3" opacity=".75"/>
+            <circle cx="32.2" cy="111.6" r=".9" opacity=".7"/>
+            <circle cx="166.2" cy="111.6" r=".9" opacity=".7"/>
+          </g>
         </svg>
       </div>
       <p class="label crown__kicker" id="crown-kicker">Quest complete</p>
@@ -401,7 +541,17 @@
 
         <div class="crown__result" id="crown-result" hidden>
           <p class="label">Your name in runes</p>
-          <div class="runestone" id="runestone" role="img"></div>
+          <!-- Granite boulder like the Jelling stones: textured rock, rounded shading,
+               a carved border band, and the runes chiselled inside it. -->
+          <div class="runestone">
+            <div class="runestone__rock" aria-hidden="true"></div>
+            <div class="runestone__shade" aria-hidden="true"></div>
+            <svg class="runestone__band" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <path class="runestone__band-cut" d="M11 93 C8 78 7 58 11 42 C16 25 30 14 47 12 C64 10 79 17 87 31 C93 44 93 69 89 93"/>
+              <path class="runestone__band-lip" d="M11 93 C8 78 7 58 11 42 C16 25 30 14 47 12 C64 10 79 17 87 31 C93 44 93 69 89 93"/>
+            </svg>
+            <div class="runestone__runes" id="runestone" role="img"></div>
+          </div>
           <p class="crown__hail" id="crown-hail" aria-live="polite"></p>
           <p class="crown__note" id="crown-note"></p>
           <div class="stack-actions">
@@ -497,9 +647,9 @@
     </div>
   </div>
 
-  <script src="js/content.js?v=20261114-2"></script>
-  <script src="js/audio.js?v=20261114-2"></script>
-  <script src="js/ble.js?v=20261114-2"></script>
-  <script src="js/app.js?v=20261114-2"></script>
+  <script src="js/content.js?v=20261114-3"></script>
+  <script src="js/audio.js?v=20261114-3"></script>
+  <script src="js/ble.js?v=20261114-3"></script>
+  <script src="js/app.js?v=20261114-3"></script>
 </body>
 </html>
