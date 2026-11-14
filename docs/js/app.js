@@ -251,21 +251,99 @@
     setStatus((r ? "Rune " + r.symbol : conn.name) + " lost connection. Tap Connect rune to reconnect.", true);
   }
 
-  async function scan() {
+  /* ---------------- Rune chooser sheet ----------------
+     Our own themed step before the browser's Bluetooth window (which
+     cannot be styled). Picking a rune narrows that window to one entry,
+     or skips it entirely when the phone already knows the rune. */
+  let knownByName = {};          // "RUNE_2" → BluetoothDevice (already paired on this site)
+  const quietFailed = {};        // name → true once a quiet reconnect failed
+
+  function isRuneConnected(id) {
+    return Array.from(connections.values()).some(function (c) {
+      const r = runeForName(c.name);
+      return r && r.id === id && RuneBLE.isConnected(c);
+    });
+  }
+
+  function renderChooser() {
+    const list = $("#chooser-list");
+    list.replaceChildren();
+    RUNES.forEach(function (rune, i) {
+      const connected = isRuneConnected(rune.id);
+      const status = i < state.progress ? "collected" : (i === state.progress ? "next" : "locked");
+      const stateText = connected ? "Connected. Press the rune."
+        : status === "next" ? "Your next rune"
+        : status === "collected" ? "Already collected"
+        : "Not found yet";
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "choice is-" + status;
+      b.setAttribute("data-choose", String(rune.id));
+      b.disabled = connected;
+      b.innerHTML =
+        '<span class="choice__seal" aria-hidden="true">' + rune.symbol + "</span>" +
+        '<span class="choice__body"><span class="choice__room">' + escapeHtml(rune.room) + "</span>" +
+        '<span class="choice__state">' + stateText + "</span></span>" +
+        (connected ? '<span class="choice__tag">● Linked</span>'
+          : knownByName[RUNE_NAME_PREFIX + rune.id] && !quietFailed[RUNE_NAME_PREFIX + rune.id] ? '<span class="choice__tag">Paired</span>' : "");
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+  }
+
+  async function openChooser() {
     if (state.busy) return;
     if (!RuneBLE.isSupported()) { setStatus(NO_BLE_MSG, true); return; }
+    renderChooser();
+    const sheet = $("#chooser");
+    sheet.classList.remove("is-leaving");
+    sheet.hidden = false;
+    focusFirstChoice();
+    // Look up runes this phone already paired with (async; refresh tags when known).
+    const known = await RuneBLE.knownDevices();
+    knownByName = {};
+    known.forEach(function (d) { knownByName[d.name] = d; });
+    if (!sheet.hidden && known.length) { renderChooser(); focusFirstChoice(); }
+  }
+
+  function focusFirstChoice() {
+    const sheet = $("#chooser");
+    const first = sheet.querySelector(".choice.is-next:not(:disabled)") || sheet.querySelector(".choice:not(:disabled)") || sheet.querySelector(".sheet__close");
+    if (first) first.focus();
+  }
+
+  function closeChooser() {
+    const sheet = $("#chooser");
+    if (sheet.hidden) return;
+    sheet.classList.add("is-leaving");
+    setTimeout(function () { sheet.hidden = true; sheet.classList.remove("is-leaving"); $("#scan-btn").focus(); }, reducedMotion ? 0 : 180);
+  }
+
+  /* id = 1/2/3 to connect a specific rune, or null for "show all runes". */
+  async function connectRune(id) {
+    if (state.busy) return;
+    if (!RuneBLE.isSupported()) { setStatus(NO_BLE_MSG, true); return; }
+    const name = id ? RUNE_NAME_PREFIX + id : null;
+    const known = name && knownByName[name] && !quietFailed[name] ? knownByName[name] : null;
+    $("#chooser").hidden = true;
     state.busy = true;
-    setScanBusy("searching");
-    setStatus("Choose the rune in the list…");
+    setScanBusy(known ? "connecting" : "searching");
+    const rune = id ? RUNES.find(function (r) { return r.id === id; }) : null;
+    setStatus(known ? "Calling rune " + rune.symbol + "…"
+      : rune ? "Tap " + name + " in the window, then Pair." : "Choose the rune in the list…");
+    const handlers = {
+      onStage: function (stage) {
+        setScanBusy(stage);
+        if (stage === "connecting") setStatus("Waking the rune…");
+      },
+      onPress: onRunePress,
+      onDisconnect: onRuneDisconnect
+    };
     try {
-      const conn = await RuneBLE.connect({
-        onStage: function (stage) {
-          setScanBusy(stage);
-          if (stage === "connecting") setStatus("Waking the rune…");
-        },
-        onPress: onRunePress,
-        onDisconnect: onRuneDisconnect
-      });
+      const conn = known
+        ? await RuneBLE.reconnect(known, handlers, 5000)
+        : await RuneBLE.connect(handlers, { name: name });
       const old = connections.get(conn.device.id);
       if (old && old !== conn) RuneBLE.disconnect(old);
       connections.set(conn.device.id, conn);
@@ -274,8 +352,16 @@
       setStatus((r ? "Rune " + r.symbol : conn.name) + " connected. Press the rune to hear its story.");
     } catch (err) {
       console.warn(err);
-      if (err && err.name === "NotFoundError") setStatus("No rune chosen. Tap Connect rune to try again.");
-      else setStatus("Could not reach the rune. Move closer and try again.", true);
+      if (known) {
+        // Quiet reconnect failed: next tap opens the browser window instead
+        // (a fresh tap is needed for that window).
+        quietFailed[name] = true;
+        setStatus("Rune " + rune.symbol + " didn't answer. Tap Connect rune and choose it again.", true);
+      } else if (err && err.name === "NotFoundError") {
+        setStatus("No rune chosen. Tap Connect rune to try again.");
+      } else {
+        setStatus("Could not reach the rune. Move closer and try again.", true);
+      }
     } finally {
       state.busy = false;
       setScanBusy(false);
@@ -510,6 +596,9 @@
 
   /* ---------------- Events ---------------- */
   document.addEventListener("click", function (e) {
+    const choice = e.target.closest("[data-choose]");
+    if (choice) { connectRune(Number(choice.getAttribute("data-choose"))); return; }
+    if (e.target.id === "chooser") { closeChooser(); return; } // tap on the dimmed backdrop
     const sim = e.target.closest("[data-sim]");
     if (sim) { handleRune(Number(sim.getAttribute("data-sim")), null); return; }
 
@@ -520,7 +609,9 @@
       case "home": showScreen("start"); break;
       case "settings": showScreen("settings"); break;
       case "back": showScreen(state.previous && state.previous !== "settings" ? state.previous : "start"); break;
-      case "scan": scan(); break;
+      case "scan": openChooser(); break;
+      case "close-chooser": closeChooser(); break;
+      case "choose-any": connectRune(null); break;
       case "start-story": startStory(); break;
       case "replay":
         if (state.screen === "story" && !$("#unlocked").hidden) startStory();
@@ -548,7 +639,7 @@
   $("#overlay").addEventListener("click", function () { hideOverlay(true); });
   $("#unlockfx").addEventListener("click", endUnlockFx);
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") { hideOverlay(true); endUnlockFx(); }
+    if (e.key === "Escape") { hideOverlay(true); endUnlockFx(); closeChooser(); }
   });
 
   /* ---------------- Optional assets ---------------- */

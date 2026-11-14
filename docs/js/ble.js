@@ -36,20 +36,65 @@ const RuneBLE = (function () {
     return null;
   }
 
-  /* Opens the Bluetooth picker, connects and starts listening for presses.
+  /* Opens the browser's Bluetooth window, connects and starts listening.
+     The window itself is drawn by the browser and cannot be styled.
+     opts.name: e.g. "RUNE_2" → the window lists only that rune (one tap).
      handlers:
        onStage("searching" | "connecting")
        onPress(id, conn)   — called with 1/2/3 each time the rune is pressed
        onDisconnect(conn)  — called if the connection drops
      Returns conn = { device, name, ledChar, pressChar }.
      Throws on cancel or failure (and disconnects first). */
-  async function connect(handlers) {
+  async function connect(handlers, opts) {
     const h = handlers || {};
+    const name = opts && opts.name;
     h.onStage && h.onStage("searching");
     const device = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: RUNE_NAME_PREFIX }],
+      filters: [name ? { name: name } : { namePrefix: RUNE_NAME_PREFIX }],
       optionalServices: [RUNE_SERVICE_UUID]
     });
+    return setup(device, h);
+  }
+
+  /* Runes this phone already paired with on this site (no browser window
+     needed). Only some Chrome versions support this; returns [] otherwise. */
+  async function knownDevices() {
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return [];
+    try {
+      const list = await navigator.bluetooth.getDevices();
+      return list.filter(function (d) { return d.name && d.name.indexOf(RUNE_NAME_PREFIX) === 0; });
+    } catch (err) {
+      return [];
+    }
+  }
+
+  /* Reconnects to a known rune without the browser window.
+     Waits (up to ms) for the rune to be heard nearby first. */
+  async function reconnect(device, handlers, ms) {
+    if (device.watchAdvertisements) await waitForAdvertisement(device, ms || 5000);
+    return setup(device, handlers || {});
+  }
+
+  function waitForAdvertisement(device, ms) {
+    return new Promise(function (resolve, reject) {
+      const ac = window.AbortController ? new AbortController() : null;
+      const timer = setTimeout(function () {
+        if (ac) ac.abort();
+        reject(new Error("Rune not in range"));
+      }, ms);
+      device.addEventListener("advertisementreceived", function () {
+        clearTimeout(timer);
+        if (ac) ac.abort();
+        resolve();
+      }, { once: true });
+      device.watchAdvertisements(ac ? { signal: ac.signal } : undefined).catch(function (err) {
+        clearTimeout(timer);
+        reject(err);
+      });
+    });
+  }
+
+  async function setup(device, h) {
     h.onStage && h.onStage("connecting");
     try {
       const server = await device.gatt.connect();
@@ -60,16 +105,19 @@ const RuneBLE = (function () {
 
       const conn = { device: device, name: device.name || "Rune", ledChar: ledChar, pressChar: pressChar };
 
-      pressChar.addEventListener("characteristicvaluechanged", function (e) {
+      // Replace (not stack) listeners when the same device reconnects.
+      if (pressChar.__onValue) pressChar.removeEventListener("characteristicvaluechanged", pressChar.__onValue);
+      pressChar.__onValue = function (e) {
         const text = new TextDecoder().decode(e.target.value).trim();
         const id = parseInt(text, 10);
         if (id >= 1) h.onPress && h.onPress(id, conn); // "0" = idle → ignore
-      });
+      };
+      pressChar.addEventListener("characteristicvaluechanged", pressChar.__onValue);
       await pressChar.startNotifications();
 
-      device.addEventListener("gattserverdisconnected", function () {
-        h.onDisconnect && h.onDisconnect(conn);
-      });
+      if (device.__onDrop) device.removeEventListener("gattserverdisconnected", device.__onDrop);
+      device.__onDrop = function () { h.onDisconnect && h.onDisconnect(conn); };
+      device.addEventListener("gattserverdisconnected", device.__onDrop);
       return conn;
     } catch (err) {
       disconnect({ device: device });
@@ -101,5 +149,13 @@ const RuneBLE = (function () {
     }
   }
 
-  return { isSupported: isSupported, connect: connect, writeLed: writeLed, isConnected: isConnected, disconnect: disconnect };
+  return {
+    isSupported: isSupported,
+    connect: connect,
+    knownDevices: knownDevices,
+    reconnect: reconnect,
+    writeLed: writeLed,
+    isConnected: isConnected,
+    disconnect: disconnect
+  };
 })();
