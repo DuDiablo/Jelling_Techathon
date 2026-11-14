@@ -392,19 +392,20 @@ body.is-finale .vignette {
 }
 /* Design background: warm radial parchment (vignette + grain are off on this screen) */
 @media (max-width: 599px) {
-  body.is-start {
+  body.is-mapbg {
     background-color: #D8BF94;
     background-image: radial-gradient(ellipse at center, #E2CDA3 0%, #D8BF94 55%, #B89A68 100%);
   }
-  html:has(body.is-start) { background-color: #D8BF94; }
+  html:has(body.is-mapbg) { background-color: #D8BF94; }
 }
 /* Tablets / desktops / landscape: same gradient on the journal page */
 @media (min-width: 600px) {
-  body.is-start .app { background-image: radial-gradient(ellipse at center, #E2CDA3 0%, #D8BF94 55%, #B89A68 100%); }
+  body.is-mapbg .app { background-image: radial-gradient(ellipse at center, #E2CDA3 0%, #D8BF94 55%, #B89A68 100%); }
 }
-body.is-start .vignette, body.is-start .grain { display: none; }
+body.is-mapbg .vignette, body.is-mapbg .grain { display: none; }
 /* Antique map, 18% opacity: 846×847 at x −159 on a 390 canvas (= centre + 69px) */
-body.has-map-bg .screen--start::before {
+body.has-map-bg .screen--start::before,
+body.has-map-bg .screen--map::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -500,7 +501,8 @@ body.has-map-bg .screen--start::before {
 .deboss-on-dark { filter: url(#deboss-dark); }
 
 /* ---------- 4.2 Quest map ---------- */
-.screen--map { gap: var(--s2); }
+.screen--map { position: relative; gap: var(--s2); }
+.screen--map > * { position: relative; z-index: 1; } /* above the antique map layer */
 .map-side { display: flex; flex-direction: column; gap: var(--s2); flex: 1; }
 .map-side .map-actions { margin-top: auto; padding-top: var(--s1); }
 .screen--map .topbar { margin-bottom: 0; }
@@ -1093,7 +1095,7 @@ body.is-finale {
   body.is-finale .app::after { box-shadow: inset 0 0 120px 30px rgba(43, 20, 8, .6), inset 0 0 24px rgba(30, 14, 6, .5); }
 
   .screen--start { min-height: calc(100dvh - 2 * var(--s4) - var(--s5) - var(--s4)); }
-  body.has-map-bg .screen--start::before { position: absolute; background-size: cover; background-position: center; }
+  body.has-map-bg .screen--start::before, body.has-map-bg .screen--map::before { position: absolute; background-size: cover; background-position: center; }
   .overlay__note { max-width: 520px; }
   .mapcard { max-width: calc(54dvh * .8); max-height: 54dvh; }
 }
