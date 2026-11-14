@@ -92,7 +92,7 @@ const PERSIST_PROGRESS = false;
 - `false` (current): a normal page refresh starts the quest from 0 / 3. Good for demos and testing.
 - `true`: a normal refresh also continues the visit.
 
-NFC tags don't need this switch: a page opened from a tag always continues the saved visit (progress, house, clan size, quest timer). It's saved on the phone and forgotten after 6 hours or on **Reset quest**.
+NFC tags don't need this switch: a page opened from a tag always continues the saved visit (progress, house, clan size, quest timer). It's saved on the phone and wiped by a **page refresh** (hard reset), **Reset quest**, or after 6 hours.
 
 In the app, **Settings** has a "Show story text" switch and **Reset quest**.
 
