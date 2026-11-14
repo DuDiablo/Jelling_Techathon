@@ -1,7 +1,8 @@
 /* =====================================================================
    HARALD'S QUEST — APP
    Game state, screens, overlays, NFC tags (?rune=N links + Web NFC) and debug (?debug=1).
-   Texts live in content.js, Bluetooth in ble.js, audio in audio.js, the longship game in sail.js.
+   Texts live in content.js, Bluetooth in ble.js, audio in audio.js, the longship game in sail.js,
+   the joystick (RUNE_CONTROLLER) in controller.js.
    ===================================================================== */
 
 (function () {
@@ -147,6 +148,7 @@
 
   /* ---------------- Sail to Jelling (sail.js) ---------------- */
   function openSail() {
+    if (!isComplete()) return;   // only after all three runes are found
     if (state.screen !== "sail") state.sailFrom = state.screen;
     $("#sail-intro").hidden = false;
     $("#sail-result").hidden = true;
@@ -156,6 +158,7 @@
   function renderSailLabel() {
     $("#sail-label").textContent = state.gold ? "Clan gold: " + state.gold : (state.clan ? state.clan.name : "Viking voyage");
   }
+  function sailPanelOpen() { return !$("#sail-intro").hidden || !$("#sail-result").hidden; }
   function startSail() {
     $("#sail-intro").hidden = true;
     $("#sail-result").hidden = true;
@@ -177,8 +180,43 @@
     $("#sail-result").hidden = false;
     $("#sail-again").focus();
   }
-  // A joystick (or anything else) can steer: HaraldJoystick("L" | "R" | "C") or a number from -1 to 1.
-  window.HaraldJoystick = function (v) { Sail.stick(v); };
+  // Anything can steer: HaraldJoystick(x, y) with numbers from -1 to 1, or a direction like "UL".
+  window.HaraldJoystick = function (x, y) { Sail.stick(x, y); };
+
+  /* ---------------- Joystick: RUNE_CONTROLLER (controller.js) ---------------- */
+  const CTRL_TEXT = {
+    idle: "Connect joystick",
+    choosing: "Searching…",
+    connecting: "Connecting…",
+    connected: "Joystick ready",
+    disconnected: "Reconnect joystick",
+    failed: "Try joystick again"
+  };
+  let ctrlState = "idle";
+  function renderController(st) {
+    if (st) ctrlState = st;
+    const btn = $("#ctrl-btn");
+    const ok = Controller.supported();
+    btn.hidden = !ok;
+    $("#ctrl-note").hidden = ok;
+    btn.classList.toggle("is-on", ctrlState === "connected");
+    btn.classList.toggle("is-busy", ctrlState === "choosing" || ctrlState === "connecting");
+    $("#ctrl-text").textContent = CTRL_TEXT[ctrlState] || CTRL_TEXT.idle;
+    btn.setAttribute("aria-pressed", ctrlState === "connected" ? "true" : "false");
+  }
+  async function toggleController() {
+    if (Controller.isConnected()) { Controller.disconnect(); return; }
+    if (ctrlState === "choosing" || ctrlState === "connecting") return;
+    try { await Controller.connect(); } catch (e) { /* the state handler shows what happened */ }
+  }
+  Controller.on("state", renderController);
+  Controller.on("input", function (v) { Sail.stick(v.x, v.y); });
+  // The action button: starts / restarts the voyage on a card, "Row!" while sailing.
+  Controller.on("press", function () {
+    if (state.screen !== "sail") return;
+    if (sailPanelOpen()) { Controller.sound("click"); startSail(); }
+    else Sail.action();
+  });
 
   /* ---------------- Clan: choose your house ---------------- */
   // The clan colour replaces the map seal colours (--ember / --moss) and the crown gems (--gem*).
@@ -308,6 +346,8 @@
     $("#map-title").textContent = state.clan ? state.clan.name : "The Quest";
     $("#progress-label").textContent = "Runes found: " + state.progress + " / " + n +
       (state.clan ? " · " + state.members + (state.members === 1 ? " seeker" : " seekers") : "");
+    // The longship game is a reward: it opens once all three runes are found.
+    $("#map-sail").hidden = !isComplete();
 
     RUNES.forEach(function (rune, i) {
       const status = i < state.progress ? "collected" : (i === state.progress ? "next" : "locked");
@@ -1192,6 +1232,7 @@
       case "clan-more": state.members++; renderMembers(); saveVisit(); break;
       case "nfc": startNfc(true); break;
       case "sail": openSail(); break;
+      case "ctrl": toggleController(); break;
       case "sail-start": case "sail-again": startSail(); break;
       case "sail-back": showScreen(state.sailFrom || "map"); break;
       case "clan-go":
@@ -1263,8 +1304,14 @@
   $("#overlay").addEventListener("click", function () { hideOverlay(true); });
   Sail.init($("#sail-canvas"), {
     getClan: function () { return state.clan; },
-    onEnd: sailEnded
+    onEnd: sailEnded,
+    // sounds on the joystick: coin = click, bump = lose, landing = win
+    onSound: function (kind) { Controller.sound(kind === "coin" ? "click" : kind === "hit" ? "lose" : "win"); },
+    hint: function () {
+      return Controller.isConnected() ? "Steer with the joystick. Button: Row!" : "Drag to steer. Tap to Row!";
+    }
   });
+  renderController();
   $("#crown-form").addEventListener("submit", function (e) {
     e.preventDefault();
     carveNames(nameInputs().map(function (inp) { return inp.value; }));

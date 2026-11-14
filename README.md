@@ -56,6 +56,17 @@ Must match `firmware/rune/rune.ino`. Device names: `RUNE_1`, `RUNE_2`, `RUNE_3` 
 - **LED codes:** `"0"` idle · `"1"` collected (solid) · `"2"` wrong order (fast blink).
 - The phone does **not** disconnect after a press. If a rune drops out, the app says so and you can reconnect.
 
+**Joystick controller** (`RUNE_CONTROLLER`, firmware built with `CONTROL_MODE 1`). It has its own service, so it never gets mixed up with the runes. Used only by **Sail to Jelling** (`docs/js/controller.js`).
+
+| What | UUID | Direction |
+|---|---|---|
+| Service | `7a1e0010-5c1d-4b6a-9f2e-6a72756e6500` | – |
+| Controls (notify) | `7a1e0011-5c1d-4b6a-9f2e-6a72756e6500` | controller → phone, text `"x,y,a"` |
+| Sounds (write) | `7a1e0012-5c1d-4b6a-9f2e-6a72756e6500` | phone writes one character |
+
+- **Controls:** `x` -1 left … 1 right, `y` -1 down … 1 up, `a` 1 = action pressed.
+- **Sounds:** `"1"` click (coin), `"2"` win (landed at Jelling), `"3"` lose (bump).
+
 ## Run it locally
 
 No install or build step: plain HTML, CSS and JavaScript.
@@ -108,6 +119,7 @@ docs/                  ← the web app (GitHub Pages serves this folder)
   js/app.js            game state, screens, chooser, overlays, NFC tags + debug
   js/keepsakes.js      take-home images: rune stone, certificate, alphabet card
   js/sail.js           "Sail to Jelling" longship mini game (canvas)
+  js/controller.js     RUNE_CONTROLLER joystick over Bluetooth (for the game)
   audio/README.md      expected audio file names
   decisions.md         decision log (note: public on GitHub Pages)
 design/  src/          placeholders
@@ -147,12 +159,15 @@ Each rune gets one NFC sticker (NTAG213 or NTAG215) holding a **URL record**:
 
 ## Sail to Jelling (mini game)
 
-A ~30 second longship game, opened from **Sail to Jelling** on the map or the finale screen.
-- Steer up the fjord to Jelling: **drag** a finger left and right, or use the **arrow keys** (A / D).
+A ~30 second longship game, the reward for finding all three runes. **Sail to Jelling** appears on the map and the finale screen once the quest is complete.
+- Steer up the fjord to Jelling on **both axes**: left / right, and forward / back on the screen.
+  - **Joystick:** tap **Connect joystick** under the game and choose `RUNE_CONTROLLER`. The stick steers. The button starts the voyage, and while sailing it shouts **Row!** (a burst of speed, then a 3.5 s rest).
+  - **Phone:** drag to steer, tap to row. **Keyboard:** arrows / WASD, Space to row.
+- The controller plays its sounds: click on a coin, lose on a bump, win at Jelling.
 - Silver coins are gold for your clan. Every bump into a rock or the bank costs 2 coins. A clean voyage earns a bonus (+5 with no bumps, +2 with up to 2).
 - The clan's best gold is kept with the visit and printed on the **Ruler of the Runes** certificate.
 
-**Joystick (planned):** the game already listens to `HaraldJoystick(x)`, where `x` is a number from -1 (left) to 1 (right), or a direction letter (`"L"`, `"R"`, `"C"`, `"UL"`, …). To steer it from an ESP32 joystick, the firmware would send the direction over a new Bluetooth characteristic, and `ble.js` would pass it to `HaraldJoystick`. That characteristic isn't added yet; the existing UUIDs and LED codes are unchanged.
+**Testing without the controller:** in the browser console, `HaraldJoystick(1, 0)` steers right, and `Controller._feed("0,1,1")` acts like the controller sending "forward + button".
 
 ## Test checklist (real hardware)
 
