@@ -16,6 +16,7 @@ Shared instructions for Claude Code. Hackathon team of 6, 48 hours. Speed and no
 - Never commit secrets or `.env` files. Add new variables to `.env.example` with empty values.
 - Run the project's lint/test commands before committing (to be defined once the stack is chosen).
 - Record significant tech or design decisions in `docs/decisions.md`.
+- After editing anything in `docs/css/` or `docs/js/`, bump the `?v=` version on the CSS/JS tags in `docs/index.html` so browsers do not use stale cached files.
 
 ## Project context
 TBD. Fill in once the idea and stack are chosen: what we're building, stack, how to run, lint, and test.
