@@ -67,7 +67,8 @@
     state.previous = state.screen;
     state.screen = name;
     document.body.classList.toggle("is-finale", name === "finale");
-    document.body.classList.toggle("is-mapbg", name !== "finale");
+    document.body.classList.toggle("is-mapbg", name !== "finale" && name !== "crown");
+    document.body.classList.toggle("is-crown", name === "crown");
 
     to.hidden = false;
     to.classList.add("is-entering");
@@ -619,15 +620,121 @@
     if (state.screen === "story" && st && st.final && st.fresh) {
       st.fresh = false;
       setTimeout(function () { if (state.screen === "story") showFinale(); }, 1200);
+    } else if (state.screen === "finale" && finaleAutoCrown) {
+      // Finale story heard to the end → the crown ceremony follows by itself,
+      // but never before the ᚼ + ᛒ animation and text have had time to show.
+      finaleAutoCrown = false;
+      const wait = Math.max(1500, FINALE_MIN_MS - (Date.now() - finaleShownAt));
+      setTimeout(function () { if (state.screen === "finale") showCrown(); }, wait);
     }
   });
 
   /* ---------------- Finale ---------------- */
+  const FINALE_MIN_MS = 6000;
+  let finaleShownAt = 0;
+  let finaleAutoCrown = false;
+
   function showFinale() {
     $("#finale-title").textContent = FINISHED.title;
     $("#finale-text").textContent = FINISHED.text;
+    finaleShownAt = Date.now();
+    finaleAutoCrown = true;
     showScreen("finale");
     AudioPlayer.play(FINISHED.audio, FINISHED.text);
+  }
+
+  /* ---------------- Crown: congratulations + your name in runes ---------------- */
+  /* Younger Futhark (Danish long-branch), the runes on the Jelling stones.
+     Old Norse had fewer sounds than English, so several letters share a rune. */
+  const RUNE_MAP = {
+    a: "ᛅ", b: "ᛒ", c: "ᚴ", d: "ᛏ", e: "ᛁ", f: "ᚠ", g: "ᚴ", h: "ᚼ", i: "ᛁ", j: "ᛁ",
+    k: "ᚴ", l: "ᛚ", m: "ᛘ", n: "ᚾ", o: "ᚬ", p: "ᛒ", q: "ᚴ", r: "ᚱ", s: "ᛋ", t: "ᛏ",
+    u: "ᚢ", v: "ᚢ", w: "ᚢ", x: "ᚴᛋ", y: "ᛁ", z: "ᛋ",
+    "æ": "ᛅ", "ä": "ᛅ", "ø": "ᚬ", "ö": "ᚬ", "å": "ᚬ", "ü": "ᚢ", "þ": "ᚦ", "ð": "ᚦ"
+  };
+  const RUNE_WORD_GAP = "᛫"; // runic word separator
+
+  /* "Harald Blåtand" → [{latin:"H", rune:"ᚼ"}, …, {gap:true}, …] */
+  function toRunes(name) {
+    const out = [];
+    const s = String(name).trim().replace(/\s+/g, " ");
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      const lower = ch.toLowerCase();
+      if (ch === " " || ch === "-") { if (out.length && !out[out.length - 1].gap) out.push({ gap: true }); continue; }
+      // "th" → ᚦ (thurs), as in Thor
+      if (lower === "t" && (s[i + 1] || "").toLowerCase() === "h") { out.push({ latin: s.substr(i, 2), rune: "ᚦ" }); i++; continue; }
+      // soft c (before e, i, y) sounds like s
+      if (lower === "c" && /[eiy]/i.test(s[i + 1] || "")) { out.push({ latin: ch, rune: "ᛋ" }); continue; }
+      let rune = RUNE_MAP[lower];
+      if (!rune) {
+        const base = lower.normalize("NFD").replace(/[̀-ͯ]/g, ""); // é → e, ñ → n
+        rune = RUNE_MAP[base];
+      }
+      if (rune) out.push({ latin: ch, rune: rune });
+    }
+    while (out.length && out[out.length - 1].gap) out.pop();
+    return out;
+  }
+
+  function showCrown() {
+    finaleAutoCrown = false;
+    $("#crown-kicker").textContent = CROWN.kicker;
+    $("#crown-title").textContent = CROWN.title;
+    $("#crown-subtitle").textContent = CROWN.subtitle;
+    $("#crown-ask").textContent = CROWN.ask;
+    $("#crown-form").querySelector("[type=submit]").textContent = CROWN.button;
+    $("#crown-note").textContent = CROWN.note;
+    resetCrownForm();
+    showScreen("crown");
+    burstDust($("#crown-dust"), 44, 90, 170, 1500);
+    const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+    if (navigator.vibrate && tapped) { try { navigator.vibrate([60, 80, 120]); } catch (e) { /* ignore */ } }
+  }
+
+  function resetCrownForm() {
+    $("#crown-form").hidden = false;
+    $("#crown-result").hidden = true;
+    $("#crown-error").textContent = "";
+    $("#runestone").replaceChildren();
+  }
+
+  function carveName(name) {
+    const runes = toRunes(name);
+    if (!runes.some(function (r) { return !r.gap; })) {
+      $("#crown-error").textContent = "Use letters A–Z so the runes can be carved.";
+      $("#crown-name").focus();
+      return;
+    }
+    const clean = String(name).trim().replace(/\s+/g, " ");
+    const stone = $("#runestone");
+    stone.replaceChildren();
+    const STEP = reducedMotion ? 0 : 220;
+    let n = 0;
+    runes.forEach(function (r) {
+      const cell = document.createElement("span");
+      cell.className = "rune-cell" + (r.gap ? " rune-cell--gap" : "");
+      cell.style.setProperty("--d", (n * STEP) + "ms");
+      const rune = document.createElement("span");
+      rune.className = "rune-cell__rune";
+      rune.textContent = r.gap ? RUNE_WORD_GAP : r.rune;
+      cell.appendChild(rune);
+      if (!r.gap) {
+        const latin = document.createElement("span");
+        latin.className = "rune-cell__latin";
+        latin.textContent = r.latin.toUpperCase();
+        cell.appendChild(latin);
+      }
+      stone.appendChild(cell);
+      n++;
+    });
+    stone.setAttribute("aria-label", clean + " written in runes: " + runes.map(function (r) { return r.gap ? " " : r.rune; }).join(""));
+    const hail = $("#crown-hail");
+    hail.style.setProperty("--hail-delay", (n * STEP + 300) + "ms");
+    hail.textContent = CROWN.hail.replace("{name}", clean);
+    $("#crown-form").hidden = true;
+    $("#crown-result").hidden = false;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
 
   /* ---------------- Overlay (Not yet / Already) ---------------- */
@@ -671,6 +778,9 @@
     hideConfirms();
     hideOverlay(true);
     hideUnlockFx();
+    finaleAutoCrown = false;
+    resetCrownForm();
+    $("#crown-name").value = "";
     AudioPlayer.stop();
     setProgress(0);
     state.drawnProgress = null;
@@ -706,6 +816,12 @@
         if (state.story && state.story.final && !state.story.revisit) showFinale();
         else showScreen("map");
         break;
+      case "crown": showCrown(); break;
+      case "crown-again":
+        resetCrownForm();
+        $("#crown-name").value = "";
+        $("#crown-name").focus();
+        break;
       case "ask-reset": askReset(el); break;
       case "cancel-reset": hideConfirms(); break;
       case "do-reset": doReset(); break;
@@ -728,6 +844,11 @@
   });
 
   $("#overlay").addEventListener("click", function () { hideOverlay(true); });
+  $("#crown-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    carveName($("#crown-name").value);
+  });
+  $("#crown-name").addEventListener("input", function () { $("#crown-error").textContent = ""; });
   // The unlock animation can't be skipped: swallow every tap/key while it plays.
   ["click", "pointerdown", "touchstart", "contextmenu"].forEach(function (type) {
     $("#unlockfx").addEventListener(type, function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
@@ -813,7 +934,7 @@
       animateMap();
       setStatus("You found rune " + nfcRune.symbol + ". Tap the button to hear it.");
     }
-    document.body.classList.toggle("is-mapbg", state.screen !== "finale");
+    document.body.classList.toggle("is-mapbg", state.screen !== "finale" && state.screen !== "crown");
   }
 
   init();
