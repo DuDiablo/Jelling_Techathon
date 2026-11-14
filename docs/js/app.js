@@ -123,7 +123,7 @@
       m.style.top = rune.mapY + "%";
       m.innerHTML =
         '<svg class="marker__seal" aria-hidden="true"><use href="#seal"/></svg>' +
-        '<span class="marker__glyph" aria-hidden="true">' + rune.symbol + "</span>" +
+        '<span class="marker__glyph" aria-hidden="true">' + glyphHtml(rune.symbol) + "</span>" +
         '<span class="marker__badge" aria-hidden="true"><svg class="i-lock"><use href="#icon-lock"/></svg><svg class="i-check"><use href="#icon-check"/></svg></span>' +
         '<span class="marker__name" aria-hidden="true">' + escapeHtml(rune.room) + "</span>";
       markers.appendChild(m);
@@ -153,7 +153,7 @@
 
       const t = $("#tile-" + i);
       t.className = "tile" + (collected ? " is-collected" : "") + (status === "next" ? " is-current" : "");
-      t.textContent = collected ? rune.symbol : "?";
+      if (collected) setGlyph(t, rune.symbol); else t.textContent = "?";
       t.setAttribute("aria-label", "Rune " + (i + 1) + ": " + (collected ? "collected, tap to hear its story again" : "not found yet"));
       if (collected) {
         t.setAttribute("data-open-rune", String(i));
@@ -299,7 +299,7 @@
       b.setAttribute("data-choose", String(rune.id));
       b.disabled = connected;
       b.innerHTML =
-        '<span class="choice__seal" aria-hidden="true">' + rune.symbol + "</span>" +
+        '<span class="choice__seal" aria-hidden="true">' + glyphHtml(rune.symbol) + "</span>" +
         '<span class="choice__body"><span class="choice__room">' + escapeHtml(rune.room) + "</span>" +
         '<span class="choice__state">' + stateText + "</span></span>" +
         (connected ? '<span class="choice__tag">● Linked</span>'
@@ -434,7 +434,7 @@
     // revisit = reopened from the map: no unlock card, no finale afterwards.
     state.story = { rune: rune, fresh: fresh, final: final, revisit: !fresh };
 
-    $("#story-glyph").textContent = rune.symbol;
+    setGlyph($("#story-glyph"), rune.symbol);
     $("#story-kicker").textContent = "Rune " + (index + 1) + " of " + RUNES.length;
     $("#story-room").textContent = rune.room;
     const p = document.createElement("p");
@@ -445,7 +445,7 @@
 
     // "Rune unlocked" card: the audio waits until the visitor taps Play.
     // Reopened from the map: straight to the audio bar (paused).
-    $("#unlocked-glyph").textContent = rune.symbol;
+    setGlyph($("#unlocked-glyph"), rune.symbol);
     $("#unlocked-title").textContent = "Rune " + rune.symbol + " unlocked!";
     $("#unlocked-text").textContent = "Tap play to hear the story of " + rune.room + ".";
     $("#unlocked").hidden = !fresh;
@@ -487,7 +487,7 @@
     fx.classList.remove("is-leaving");
     fx.hidden = true;
     void fx.offsetWidth; // restart the CSS animations
-    $("#unlockfx-glyph").textContent = rune.symbol;
+    setGlyph($("#unlockfx-glyph"), rune.symbol);
     $("#unlockfx-room").textContent = rune.room;
     fx.hidden = false;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -746,7 +746,7 @@
     clearTimeout(overlayTimer);
     ov.hidden = true;
     ov.className = "overlay is-" + kind;
-    $("#overlay-glyph").textContent = rune ? rune.symbol : "";
+    setGlyph($("#overlay-glyph"), rune ? rune.symbol : "");
     $("#overlay-title").textContent = entry.title;
     $("#overlay-text").textContent = entry.text;
     void ov.offsetWidth;
@@ -899,6 +899,17 @@
   }
 
   /* ---------------- Helpers ---------------- */
+  // Runes most fonts draw half-height (ᚲ looks like a small "<"): stretched
+  // to full height so they match the 3D-printed runes.
+  const SHORT_GLYPHS = ["ᚲ"];
+  function glyphNode(symbol) {
+    const s = document.createElement("span");
+    s.className = "glyph" + (SHORT_GLYPHS.indexOf(symbol) >= 0 ? " glyph--tall" : "");
+    s.textContent = symbol;
+    return s;
+  }
+  function glyphHtml(symbol) { return glyphNode(symbol).outerHTML; }
+  function setGlyph(el, symbol) { if (symbol) el.replaceChildren(glyphNode(symbol)); else el.replaceChildren(); }
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c];

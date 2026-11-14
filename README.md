@@ -21,10 +21,10 @@ Techathon 2026 · Kongernes Jelling, Denmark · Theme: *Connecting people, place
 ## The idea
 
 - **Problem:** Kongernes Jelling has very little written text and no audio guide. School classes rush through and skip rooms, especially the fire room and the Yggdrasil room.
-- **Runes as beacons:** 3D-printed rune copies with an ESP32 inside, placed in different rooms (ᚠ → ᚼ → ᛒ).
+- **Runes as beacons:** 3D-printed rune copies with an ESP32 inside, placed in different rooms (ᚲ → ᚺ → ᛒ).
 - **Audio guide:** the visitor's phone plays the story for that room.
 - **Game:** runes must be found in order. Each one unlocks the next.
-- **Finale:** Harald's runes ᚼ + ᛒ combine into the Bluetooth logo, named after Harald Bluetooth, who lived here.
+- **Finale:** Harald's runes ᚺ + ᛒ (carved ᚼ + ᛒ in his time) combine into the Bluetooth logo, named after Harald Bluetooth, who lived here.
 
 ## How a visit works
 
