@@ -65,7 +65,7 @@
     state.previous = state.screen;
     state.screen = name;
     document.body.classList.toggle("is-finale", name === "finale");
-    document.body.classList.toggle("is-mapbg", name === "start" || name === "map");
+    document.body.classList.toggle("is-mapbg", name !== "finale");
 
     to.hidden = false;
     to.classList.add("is-entering");
@@ -702,7 +702,7 @@
       animateMap();
       setStatus("You found rune " + nfcRune.symbol + ". Tap the button to hear it.");
     }
-    document.body.classList.toggle("is-mapbg", state.screen === "start" || state.screen === "map");
+    document.body.classList.toggle("is-mapbg", state.screen !== "finale");
   }
 
   init();

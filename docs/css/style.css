@@ -403,15 +403,23 @@ body.is-finale .vignette {
   body.is-mapbg .app { background-image: radial-gradient(ellipse at center, #E2CDA3 0%, #D8BF94 55%, #B89A68 100%); }
 }
 body.is-mapbg .vignette, body.is-mapbg .grain { display: none; }
-/* Antique map, 18% opacity: 846×847 at x −159 on a 390 canvas (= centre + 69px) */
-body.has-map-bg .screen--start::before,
-body.has-map-bg .screen--map::before {
+/* Antique map behind the whole app (every screen except the finale), 18% opacity.
+   Phones: fixed to the screen, 846×847 at x −159 on a 390 canvas (= centre + 69px),
+   growing to cover taller/wider screens so no plain beige ever shows.
+   Tablets/desktops: covers the whole journal page (see 4.6). */
+.app { position: relative; isolation: isolate; }
+body.has-map-bg.is-mapbg .app::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   pointer-events: none;
-  background: #5a3a22 var(--map-bg) calc(50% + 69px) 0 / auto max(847px, 100%) no-repeat;
+  background-color: #5a3a22;
+  background-image: var(--map-bg);
+  background-repeat: no-repeat;
+  background-position: calc(50% + 69px) 0;
+  /* square image: ≥ screen height covers top-to-bottom; ≥ width + 2×69px covers side-to-side */
+  background-size: max(846px, 100vh, calc(100% + 138px)) auto;
   opacity: .18;
 }
 .start__stack {
@@ -502,7 +510,6 @@ body.has-map-bg .screen--map::before {
 
 /* ---------- 4.2 Quest map ---------- */
 .screen--map { position: relative; gap: var(--s2); }
-.screen--map > * { position: relative; z-index: 1; } /* above the antique map layer */
 .map-side { display: flex; flex-direction: column; gap: var(--s2); flex: 1; }
 .map-side .map-actions { margin-top: auto; padding-top: var(--s1); }
 .screen--map .topbar { margin-bottom: 0; }
@@ -1095,7 +1102,7 @@ body.is-finale {
   body.is-finale .app::after { box-shadow: inset 0 0 120px 30px rgba(43, 20, 8, .6), inset 0 0 24px rgba(30, 14, 6, .5); }
 
   .screen--start { min-height: calc(100dvh - 2 * var(--s4) - var(--s5) - var(--s4)); }
-  body.has-map-bg .screen--start::before, body.has-map-bg .screen--map::before { position: absolute; background-size: cover; background-position: center; }
+  body.has-map-bg.is-mapbg .app::before { position: absolute; border-radius: inherit; background-size: cover; background-position: center; }
   .overlay__note { max-width: 520px; }
   .mapcard { max-width: calc(54dvh * .8); max-height: 54dvh; }
 }
