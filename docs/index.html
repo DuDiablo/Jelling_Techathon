@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
   <!-- VERSION: bump ?v=… on the CSS + JS links below after changing them, so phones and browsers load the new files instead of an old cached copy. -->
-  <link rel="stylesheet" href="css/style.css?v=20261114-7">
+  <link rel="stylesheet" href="css/style.css?v=20261114-8">
 </head>
 <body>
 
@@ -65,6 +65,16 @@
           <path d="M16.5 8.5 a5 5 0 0 1 0 7"/>
           <path d="M19.5 6 a9 9 0 0 1 0 12"/>
           <path d="M7.5 8.5 a5 5 0 0 0 0 7" opacity=".55"/>
+        </g>
+      </symbol>
+
+      <!-- NFC: a phone with contactless waves -->
+      <symbol id="icon-nfc" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="3.5" width="9" height="17" rx="2"/>
+          <path d="M7.5 17.5 h2"/>
+          <path d="M16 9.5 a3.5 3.5 0 0 1 0 5"/>
+          <path d="M18.6 7 a7 7 0 0 1 0 10"/>
         </g>
       </symbol>
 
@@ -322,7 +332,11 @@
       </div>
 
       <div class="map-actions">
-        <button class="btn btn--primary btn--nfc" type="button" id="nfc-btn" hidden></button>
+        <!-- Web NFC (Chrome on Android): read rune tags while the app is open -->
+        <button class="btn btn--ghost btn--nfc" type="button" id="nfc-btn" data-action="nfc" hidden>
+          <svg class="btn__icon" aria-hidden="true"><use href="#icon-nfc"/></svg>
+          <span class="btn__text" id="nfc-text">Scan NFC tags</span>
+        </button>
         <button class="btn btn--primary btn--scan" type="button" id="scan-btn" data-action="scan">
           <svg class="btn__icon btn__icon--scan" aria-hidden="true"><use href="#icon-scan"/></svg>
           <svg class="btn__icon btn__icon--spin" aria-hidden="true"><use href="#icon-spinner"/></svg>
@@ -653,7 +667,7 @@
           <summary>How it works <svg aria-hidden="true"><use href="#icon-chevron"/></svg></summary>
           <div class="howto__body">
             <p><strong>Bluetooth (Android, Chrome):</strong> tap <em>Connect rune</em> and pick the rune in the list. Your phone stays connected. Now press the rune: your phone tells its story and the rune lights up.</p>
-            <p><strong>NFC (iPhone and others):</strong> hold your phone against the rune. A page opens with a <em>Hear rune</em> button.</p>
+            <p><strong>NFC tags:</strong> hold the back of your phone to the rune's tag. It works just like pressing the rune. On Android, tap <em>Scan NFC tags</em> once and the app reads tags without opening a new page.</p>
             <p>Find the runes in order. Each one unlocks the next.</p>
           </div>
         </details>
@@ -706,10 +720,10 @@
     </div>
   </div>
 
-  <script src="js/content.js?v=20261114-7"></script>
-  <script src="js/audio.js?v=20261114-7"></script>
-  <script src="js/ble.js?v=20261114-7"></script>
-  <script src="js/keepsakes.js?v=20261114-7"></script>
-  <script src="js/app.js?v=20261114-7"></script>
+  <script src="js/content.js?v=20261114-8"></script>
+  <script src="js/audio.js?v=20261114-8"></script>
+  <script src="js/ble.js?v=20261114-8"></script>
+  <script src="js/keepsakes.js?v=20261114-8"></script>
+  <script src="js/app.js?v=20261114-8"></script>
 </body>
 </html>
