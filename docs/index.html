@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
   <!-- VERSION: bump ?v=… on the CSS + JS links below after changing them, so phones and browsers load the new files instead of an old cached copy. -->
-  <link rel="stylesheet" href="css/style.css?v=20261114-13">
+  <link rel="stylesheet" href="css/style.css?v=20261114-14">
 </head>
 <body>
 
@@ -150,6 +150,20 @@
           <circle cx="12" cy="12" r="3.2"/>
           <path d="M12 2.5 V5.5 M12 18.5 V21.5 M2.5 12 H5.5 M18.5 12 H21.5 M5.3 5.3 L7.4 7.4 M16.6 16.6 L18.7 18.7 M5.3 18.7 L7.4 16.6 M16.6 7.4 L18.7 5.3"/>
           <circle cx="12" cy="12" r="7" stroke-dasharray="2 2.4"/>
+        </g>
+      </symbol>
+      <!-- Sound on / off -->
+      <symbol id="icon-sound" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 9.5 H7.5 L12 5.5 V18.5 L7.5 14.5 H4 Z"/>
+          <path d="M15.5 9 a4.2 4.2 0 0 1 0 6"/>
+          <path d="M18 6.5 a7.6 7.6 0 0 1 0 11"/>
+        </g>
+      </symbol>
+      <symbol id="icon-mute" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 9.5 H7.5 L12 5.5 V18.5 L7.5 14.5 H4 Z"/>
+          <path d="M16 9.5 L21 14.5 M21 9.5 L16 14.5"/>
         </g>
       </symbol>
       <symbol id="icon-back" viewBox="0 0 24 24">
@@ -447,21 +461,26 @@
           <h2 class="topbar__title" id="sail-title">Sail to Jelling</h2>
           <p class="label" id="sail-label">Viking voyage</p>
         </div>
-        <span class="topbar__spacer" aria-hidden="true"></span>
+        <button class="icon-btn" type="button" id="sail-sound" data-action="sail-sound" aria-pressed="true" aria-label="Sound is on. Turn sound off"><svg aria-hidden="true"><use id="sail-sound-icon" href="#icon-sound"/></svg></button>
       </header>
       <div class="sail">
         <canvas class="sail__canvas" id="sail-canvas" role="img" aria-label="Longship game. Drag to steer the ship up the fjord, tap to row faster."></canvas>
         <div class="sail__panel" id="sail-intro">
           <p class="label">A Viking voyage</p>
           <h3 class="sail__title">Row to King Harald</h3>
-          <p class="sail__text">Steer your dragon ship up the fjord to Jelling. Grab Odin's gold rings, dodge the rune skerries and beware Jörmungandr, the Midgard Serpent! Every bump costs 2 rings.</p>
-          <p class="sail__how"><strong>Drag</strong> to steer in any direction and <strong>tap</strong> to row faster.</p>
-          <p class="sail__how"><strong>Joystick?</strong> Connect it below first, then press <strong>Start</strong>. The stick steers, the button shouts <strong>Row!</strong></p>
+          <ul class="sail__key">
+            <li><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.2" fill="none" stroke="#c9a14a" stroke-width="3.6"/></svg><span><strong>Odin's gold rings</strong> are gold for your clan.</span></li>
+            <li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 q4 -11 8 0 q4 -11 8 0" fill="none" stroke="#1f5546" stroke-width="3.6" stroke-linecap="round"/></svg><span><strong>Rocks, banks</strong> and the <strong>Midgard Serpent</strong>: a bump costs 2 rings.</span></li>
+            <li><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="8.6" y="8" width="2.8" height="10" rx="1" fill="#7a5a3a"/><rect x="3" y="2.5" width="14" height="7" rx="1.6" fill="#8fa3b8"/><rect x="8.6" y="2.5" width="2.8" height="7" fill="#c9a14a"/></svg><span><strong>Thor's hammer</strong>: nothing can hurt you for 6 seconds.</span></li>
+            <li><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 16.5 L12 8" fill="none" stroke="#5a3a1e" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="14.2" cy="5.8" rx="2.8" ry="4.6" transform="rotate(45 14.2 5.8)" fill="#86542b"/></svg><span><strong>Drag</strong> to steer, <strong>tap</strong> to Row! for a burst of speed.</span></li>
+          </ul>
+          <p class="sail__how"><strong>Joystick?</strong> Connect it below first, then press Start. The stick steers, the button shouts Row!</p>
           <button class="btn btn--primary" type="button" data-action="sail-start">Start</button>
         </div>
         <div class="sail__panel" id="sail-result" hidden aria-live="polite">
           <p class="label">Land ho!</p>
           <h3 class="sail__title">You reached Jelling</h3>
+          <p class="sail__rank"><span class="sail__rank-label">Your rank</span><span id="sail-rank">Viking</span></p>
           <p class="sail__gold"><span id="sail-gold">0</span><span class="sail__gold-label" id="sail-gold-label">gold</span></p>
           <p class="sail__text" id="sail-text"></p>
           <p class="sail__best" id="sail-best"></p>
@@ -792,12 +811,12 @@
     </div>
   </div>
 
-  <script src="js/content.js?v=20261114-13"></script>
-  <script src="js/audio.js?v=20261114-13"></script>
-  <script src="js/ble.js?v=20261114-13"></script>
-  <script src="js/keepsakes.js?v=20261114-13"></script>
-  <script src="js/sail.js?v=20261114-13"></script>
-  <script src="js/controller.js?v=20261114-13"></script>
-  <script src="js/app.js?v=20261114-13"></script>
+  <script src="js/content.js?v=20261114-14"></script>
+  <script src="js/audio.js?v=20261114-14"></script>
+  <script src="js/ble.js?v=20261114-14"></script>
+  <script src="js/keepsakes.js?v=20261114-14"></script>
+  <script src="js/sail.js?v=20261114-14"></script>
+  <script src="js/controller.js?v=20261114-14"></script>
+  <script src="js/app.js?v=20261114-14"></script>
 </body>
 </html>

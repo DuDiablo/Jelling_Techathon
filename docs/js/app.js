@@ -20,6 +20,7 @@
   const VISIT_MAX_AGE_MS = 6 * 60 * 60 * 1000; // a visit older than 6 hours starts fresh
   const KEY_SHOW_TEXT = "haraldShowText";
   const KEY_RATE = "haraldAudioRate";
+  const KEY_SAIL_MUTED = "haraldSailMuted";   // "1" = the longship game is silent
   const OVERLAY_MS = 4000;
   const params = new URLSearchParams(location.search);
   const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -171,15 +172,31 @@
     saveVisit();
     renderSailLabel();
     const house = state.clan ? " for the " + state.clan.name : "";
+    $("#sail-rank").textContent = r.rank;
     $("#sail-gold").textContent = r.gold;
     $("#sail-gold-label").textContent = "gold" + house;
     $("#sail-text").textContent = "You kept " + r.coins + " of Odin's " + r.total + " gold rings" +
-      (r.hits ? " and bumped into something " + r.hits + (r.hits === 1 ? " time." : " times.") : " and never touched a rock!") +
-      (r.bonus ? " Clean voyage bonus: +" + r.bonus + "." : "");
+      (r.hits ? " and bumped " + r.hits + (r.hits === 1 ? " time." : " times.") : " and never bumped into anything!") +
+      (r.bonus ? " Clean voyage bonus: +" + r.bonus + "." : "") +
+      (r.smashed ? " Thor's hammer smashed " + r.smashed + (r.smashed === 1 ? " rock." : " rocks.") : "");
     $("#sail-best").textContent = best ? "A new record for your clan!"
       : state.gold ? "Your best: " + state.gold + " gold" : "Steer clear of the serpent to keep your rings!";
     $("#sail-result").hidden = false;
     $("#sail-again").focus();
+  }
+  // Sound on / off for the game (remembered on this phone).
+  function renderSailSound() {
+    const on = !Sail.isMuted();
+    const btn = $("#sail-sound");
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.setAttribute("aria-label", on ? "Sound is on. Turn sound off" : "Sound is off. Turn sound on");
+    btn.classList.toggle("is-off", !on);
+    $("#sail-sound-icon").setAttribute("href", on ? "#icon-sound" : "#icon-mute");
+  }
+  function toggleSailSound() {
+    Sail.setMuted(!Sail.isMuted());
+    save(KEY_SAIL_MUTED, Sail.isMuted() ? "1" : "0");
+    renderSailSound();
   }
   // Anything can steer: HaraldJoystick(x, y) with numbers from -1 to 1, or a direction like "UL".
   window.HaraldJoystick = function (x, y) { Sail.stick(x, y); };
@@ -1234,6 +1251,7 @@
       case "nfc": startNfc(true); break;
       case "sail": openSail(); break;
       case "ctrl": toggleController(); break;
+      case "sail-sound": toggleSailSound(); break;
       case "sail-start": case "sail-again": startSail(); break;
       case "sail-back": showScreen(state.sailFrom || "map"); break;
       case "clan-go":
@@ -1306,12 +1324,17 @@
   Sail.init($("#sail-canvas"), {
     getClan: function () { return state.clan; },
     onEnd: sailEnded,
-    // sounds on the joystick: coin = click, bump = lose, landing = win
-    onSound: function (kind) { Controller.sound(kind === "coin" ? "click" : kind === "hit" ? "lose" : "win"); },
+    // sounds on the joystick: ring, hammer and smash = click, bump = lose, landing = win
+    onSound: function (kind) {
+      const code = { coin: "click", hammer: "click", smash: "click", hit: "lose", win: "win" }[kind];
+      if (code) Controller.sound(code);
+    },
     hint: function () {
       return Controller.isConnected() ? "Steer with the joystick. Button: Row!" : "Drag to steer. Tap to Row!";
     }
   });
+  Sail.setMuted(load(KEY_SAIL_MUTED) === "1");
+  renderSailSound();
   renderController();
   $("#crown-form").addEventListener("submit", function (e) {
     e.preventDefault();

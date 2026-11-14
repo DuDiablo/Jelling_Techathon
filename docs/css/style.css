@@ -1962,6 +1962,7 @@ html:has(body.is-night) { background-color: var(--jg-night); }
 .screen--sail { gap: var(--s1); }
 .screen--sail .topbar { margin-bottom: 0; }
 .topbar__spacer { width: 44px; height: 44px; flex: none; }
+#sail-sound.is-off { opacity: .55; }
 .btn--sail { gap: var(--s1); background: rgba(255, 249, 232, .6); }
 .sail {
   position: relative;
@@ -2011,6 +2012,22 @@ html:has(body.is-night) { background-color: var(--jg-night); }
   margin: .25rem 0 .5rem;
 }
 .sail__text, .sail__how { margin: 0 0 var(--s2); line-height: 1.45; }
+/* what is what on the fjord */
+.sail__key { list-style: none; margin: 0 0 var(--s2); padding: 0; display: grid; gap: .45rem; text-align: left; }
+.sail__key li { display: flex; align-items: center; gap: .6rem; line-height: 1.3; }
+.sail__key svg { width: 22px; height: 22px; flex: none; }
+.sail__rank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 0 var(--s1);
+  font-family: var(--font-head);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--ink);
+}
+.sail__rank-label { font-size: .7rem; letter-spacing: .25em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; }
 .sail__how { color: var(--ink-soft); font-size: .95rem; }
 .sail__gold {
   display: flex;
@@ -2018,7 +2035,7 @@ html:has(body.is-night) { background-color: var(--jg-night); }
   align-items: center;
   margin: 0 0 var(--s1);
   font-family: var(--font-head);
-  font-size: 3rem;
+  font-size: 2.6rem;
   font-weight: 700;
   line-height: 1;
   color: var(--clan, var(--gold));

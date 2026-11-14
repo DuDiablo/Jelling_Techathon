@@ -159,14 +159,19 @@ Each rune gets one NFC sticker (NTAG213 or NTAG215) holding a **URL record**:
 
 ## Sail to Jelling (mini game)
 
-A ~30 second longship game, the reward for finding all three runes. **Sail to Jelling** appears on the map and the finale screen once the quest is complete.
+A longship game of about half a minute, the reward for finding all three runes. **Sail to Jelling** appears on the map and the finale screen once the quest is complete.
 - Steer up the fjord to Jelling on **both axes**: left / right, and forward / back on the screen.
   - **Joystick:** tap **Connect joystick** under the game and choose `RUNE_CONTROLLER`. The stick steers. Connect it first, then press **Start** on the screen; the voyage only starts from that button. While sailing, the joystick button shouts **Row!** (a burst of speed, then a 3.5 s rest).
   - **Phone:** drag to steer, tap to row. **Keyboard:** arrows / WASD, Space to row.
-- The controller plays its sounds: click on a coin, lose on a bump, win at Jelling.
+- The controller plays its sounds: click on a ring, a hammer or a smashed rock, lose on a bump, win at Jelling.
 - Odin's gold rings are gold for your clan. Every bump into a rune skerry, Jörmungandr's coils or the bank costs 2 rings. A clean voyage earns a bonus (+5 with no bumps, +2 with up to 2).
 - Norse look: a dragon ship in your house colours, the Midgard Serpent rising in the fjord, Huginn and Muninn flying over, northern lights on the water, burial mounds, runestones and watch-fires on the banks, and Jelling's two mounds and stone ship at the end.
+- **Thor's hammer (Mjölnir)** appears twice on the way. Pick it up and nothing can hurt the ship for 6 seconds: rocks shatter and the serpent dives.
+- **Always fair:** every fjord is random, but each row of rocks leaves at least 76 px of open water and each serpent at least 86 px, with a line of rings showing the way through. No rock sits so close to a bank that the ship could get stuck.
+- **Sound:** the phone plays synthesised sounds (rings, bumps, horn, thunder), made in the browser with no audio files. The speaker button in the top bar turns them off; the choice is remembered.
+- **Result:** the card shows the gold and a rank (Rower, Viking, Jarl or Sea-King).
 - The clan's best gold is kept with the visit and printed on the **Ruler of the Runes** certificate.
+- If the page is hidden mid-voyage (a call, another app), the game pauses and shows "Ready…" for a moment when you come back.
 
 **Testing without the controller:** in the browser console, `HaraldJoystick(1, 0)` steers right, and `Controller._feed("0,1,1")` acts like the controller sending "forward + button".
 
