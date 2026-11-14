@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
   <!-- VERSION: bump ?v=… on the CSS + JS links below after changing them, so phones and browsers load the new files instead of an old cached copy. -->
-  <link rel="stylesheet" href="css/style.css?v=20261114-6">
+  <link rel="stylesheet" href="css/style.css?v=20261114-7">
 </head>
 <body>
 
@@ -584,6 +584,35 @@
           </div>
           <p class="crown__hail" id="crown-hail" aria-live="polite"></p>
           <p class="crown__note" id="crown-note"></p>
+
+          <!-- Take home: images drawn by keepsakes.js and saved as PNG -->
+          <div class="keepsakes">
+            <p class="label">Take it home</p>
+            <button class="keep" type="button" data-action="save-stone">
+              <span class="keep__icon" aria-hidden="true">ᛋ</span>
+              <span class="keep__body"><span class="keep__title">Save my rune stone</span><span class="keep__sub">Show it to friends and family</span></span>
+            </button>
+            <button class="keep" type="button" data-action="save-certificate">
+              <span class="keep__icon" aria-hidden="true">ᚱ</span>
+              <span class="keep__body"><span class="keep__title">Ruler of the Runes certificate</span><span class="keep__sub">Names, clan, date and quest time. Ready to print.</span></span>
+            </button>
+            <button class="keep" type="button" data-action="save-alphabet">
+              <span class="keep__icon" aria-hidden="true">ᚠ</span>
+              <span class="keep__body"><span class="keep__title">Rune alphabet card</span><span class="keep__sub">Write secret messages at school</span></span>
+            </button>
+            <p class="keepsakes__status" id="keep-status" aria-live="polite"></p>
+          </div>
+
+          <!-- The Younger Futhark + a live secret-message writer -->
+          <details class="alphabet" id="alphabet">
+            <summary>The rune alphabet <svg aria-hidden="true"><use href="#icon-chevron"/></svg></summary>
+            <p class="alphabet__intro">The Vikings had only 16 runes, so some letters share one. Use it to write secret messages to your friends!</p>
+            <ul class="alphabet__grid" id="alphabet-grid"></ul>
+            <label class="alphabet__label" for="secret-input">Write a secret message</label>
+            <input class="crown__input alphabet__input" id="secret-input" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="Meet me at lunch">
+            <p class="alphabet__out" id="secret-out" aria-live="polite"></p>
+          </details>
+
           <div class="stack-actions">
             <button class="btn btn--ghost" type="button" data-action="crown-again">Carve another name</button>
             <button class="btn btn--primary" type="button" data-action="home">Back to start</button>
@@ -677,9 +706,10 @@
     </div>
   </div>
 
-  <script src="js/content.js?v=20261114-6"></script>
-  <script src="js/audio.js?v=20261114-6"></script>
-  <script src="js/ble.js?v=20261114-6"></script>
-  <script src="js/app.js?v=20261114-6"></script>
+  <script src="js/content.js?v=20261114-7"></script>
+  <script src="js/audio.js?v=20261114-7"></script>
+  <script src="js/ble.js?v=20261114-7"></script>
+  <script src="js/keepsakes.js?v=20261114-7"></script>
+  <script src="js/app.js?v=20261114-7"></script>
 </body>
 </html>

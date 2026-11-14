@@ -39,7 +39,10 @@
     drawnProgress: null,     // progress the map route/seals were last drawn for
     story: null,             // { rune, fresh, final }
     clan: null,              // chosen house from CLANS (null until picked)
-    members: 2               // people in the clan: one name each on the rune stone
+    members: 2,              // people in the clan: one name each on the rune stone
+    startedAt: 0,            // when the quest began (for the certificate's quest time)
+    finishedAt: 0,           // when the last rune was found
+    carved: null             // { names, lines } of the last carving, for the keepsakes
   };
 
   function clampProgress(n) {
@@ -90,6 +93,7 @@
   }
 
   function afterEnter(name) {
+    if (name === "map" && !state.startedAt) state.startedAt = Date.now();
     if (name === "map") animateMap();
   }
 
@@ -719,6 +723,7 @@
     $("#finale-title").textContent = FINISHED.title;
     $("#finale-text").textContent = FINISHED.text;
     finaleShownAt = Date.now();
+    if (!state.finishedAt) state.finishedAt = finaleShownAt;
     finaleAutoCrown = true;
     showScreen("finale");
     AudioPlayer.play(FINISHED.audio, FINISHED.text);
@@ -877,9 +882,76 @@
     const hail = $("#crown-hail");
     hail.style.setProperty("--hail-delay", (n * STEP + 300) + "ms");
     hail.textContent = clanText(names.length > 1 ? CROWN.hailMany : CROWN.hail).replace("{name}", joinNames(names));
+    state.carved = { names: names, lines: lines };
+    $("#keep-status").textContent = "";
     $("#crown-form").hidden = true;
     $("#crown-result").hidden = false;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }
+
+  /* ---------------- Take home: keepsakes + rune alphabet ---------------- */
+  // Every letter A–Z (and TH) with its rune, built from the same rules as the carving.
+  function alphabetLetters() {
+    const out = [];
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(function (ch) {
+      const r = toRunes(ch);
+      if (r.length) out.push({ latin: ch, rune: r.map(function (x) { return x.rune; }).join("") });
+    });
+    out.push({ latin: "TH", rune: "ᚦ" });
+    return out;
+  }
+
+  function buildAlphabet() {
+    const grid = $("#alphabet-grid");
+    grid.replaceChildren();
+    alphabetLetters().forEach(function (l) {
+      const li = document.createElement("li");
+      li.innerHTML = '<span class="alphabet__rune" aria-hidden="true">' + escapeHtml(l.rune) + "</span>" +
+        '<span class="alphabet__latin">' + escapeHtml(l.latin) + "</span>";
+      li.setAttribute("aria-label", l.latin + " is " + l.rune);
+      grid.appendChild(li);
+    });
+  }
+
+  function runeString(text) {
+    return toRunes(text).map(function (r) { return r.gap ? " ᛫ " : r.rune; }).join("");
+  }
+
+  function slug(names) {
+    return (names[0] || "rune").toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "rune";
+  }
+
+  async function saveKeepsake(kind, btn) {
+    const status = $("#keep-status");
+    if (kind !== "alphabet" && !state.carved) { status.textContent = "Carve a name first."; return; }
+    btn.disabled = true;
+    status.textContent = "Drawing…";
+    try {
+      await Keepsakes.fontsReady();
+      const c = state.carved || { names: [], lines: [] };
+      let cv, file;
+      if (kind === "stone") {
+        cv = Keepsakes.stone({ names: c.names, lines: c.lines, clan: state.clan, date: new Date() });
+        file = "rune-stone-" + slug(c.names) + ".png";
+      } else if (kind === "certificate") {
+        const end = state.finishedAt || Date.now();
+        cv = Keepsakes.certificate({
+          names: c.names, lines: c.lines, clan: state.clan, date: new Date(),
+          durationMs: state.startedAt ? end - state.startedAt : 0
+        });
+        file = "ruler-of-the-runes-" + slug(c.names) + ".png";
+      } else {
+        const ex = c.names[0] || "Harald";
+        cv = Keepsakes.alphabet({ letters: alphabetLetters(), example: { latin: ex, runes: runeString(ex) } });
+        file = "rune-alphabet.png";
+      }
+      await Keepsakes.save(cv, file);
+      status.textContent = "Saved: " + file;
+    } catch (e) {
+      status.textContent = "Sorry, the image could not be saved on this device.";
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   /* ---------------- Overlay (Not yet / Already) ---------------- */
@@ -930,6 +1002,9 @@
     setProgress(0);
     state.clan = null;
     applyClan();
+    state.startedAt = 0;
+    state.finishedAt = 0;
+    state.carved = null;
     state.drawnProgress = null;
     renderMap();
     setStatus("");
@@ -956,6 +1031,7 @@
       case "clan-more": state.members++; renderMembers(); break;
       case "clan-go":
         if (!state.clan) break;
+        if (!state.startedAt) state.startedAt = Date.now();
         renderMap();
         showScreen("map");
         setStatus("We ride for the " + state.clan.name + "!");
@@ -983,6 +1059,9 @@
       case "debug-crown":
         setProgress(RUNES.length); renderMap(); showCrown();
         break;
+      case "save-stone": saveKeepsake("stone", el); break;
+      case "save-certificate": saveKeepsake("certificate", el); break;
+      case "save-alphabet": saveKeepsake("alphabet", el); break;
       case "crown-again":
         resetCrownForm();
         nameInputs().forEach(function (inp) { inp.value = ""; });
@@ -1086,6 +1165,8 @@
     if (!PERSIST_PROGRESS) { try { localStorage.removeItem(KEY_PROGRESS); } catch (e) { /* ignore */ } }
     buildMap();
     renderMap();
+    buildAlphabet();
+    $("#secret-input").addEventListener("input", function (e) { $("#secret-out").textContent = runeString(e.target.value); });
     applyShowText();
     probeAssets();
     const savedRate = parseFloat(load(KEY_RATE));
