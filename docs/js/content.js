@@ -12,6 +12,7 @@
    - symbol  : the rune glyph shown in the app (must match the 3D print).
    - room    : the room name shown on the map and the story screen.
    - hint    : shown on the map while this rune is the next one to find.
+               Use \n for a line break (handy for riddles).
    - text    : the story. It is shown on screen AND read aloud by the
                phone if the MP3 is missing.
    - audio   : the MP3 file in docs/audio/ (see docs/audio/README.md).
@@ -29,7 +30,14 @@ const RUNES = [
     id: 1,
     symbol: "ᚲ",
     room: "The Fire Room",
-    hint: "Find the room where the flames never sleep. Look for the rune ᚲ near the hearth.",
+    hint: "Where hearth-flames roared and the old hall slept,\n" +
+          "a rune of fire in shadow is kept.\n" +
+          "The dark holds it close; no wandering eye\n" +
+          "will find where the torch-rune's embers lie.\n" +
+          "So kindle a light, O seeker bold,\n" +
+          "and sweep the dark like the torch-bearers of old.\n" +
+          "On stone, on timber, on wall and floor —\n" +
+          "shine, and keep shining, till the rune wakes once more.",
     text: "Welcome, traveller. You stand where the fire burned day and night. In a Viking hall the hearth was the heart of the home: it gave light, warmth and food, and around it people told the stories you are about to hear. The rune ᚲ, kenaz, is the torch rune. It stands for fire and for the light that lets you see in the dark. Your quest has begun. Seek the great tree that holds up the nine worlds.",
     audio: "audio/rune1.mp3",
     mapX: 24,
