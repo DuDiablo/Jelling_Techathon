@@ -13,6 +13,7 @@
   //         fallback (?rune=N) opens a fresh page per tag, so it needs true.
   const PERSIST_PROGRESS = false;
   const KEY_SHOW_TEXT = "haraldShowText";
+  const KEY_RATE = "haraldAudioRate";
   const OVERLAY_MS = 4000;
   const params = new URLSearchParams(location.search);
   const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -59,7 +60,8 @@
 
     const from = $("#screen-" + state.screen);
     const to = $("#screen-" + name);
-    if (state.screen === "story" || state.screen === "finale") AudioPlayer.stop();
+    // Any screen change silences the current story / message.
+    AudioPlayer.stop();
     if (name !== "settings") hideConfirms();
 
     state.previous = state.screen;
@@ -542,28 +544,73 @@
     const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
     return m + ":" + (s < 10 ? "0" : "") + s;
   }
+  let dragging = false;
   function setBar(ratio) {
     const pct = Math.max(0, Math.min(1, ratio || 0)) * 100;
     $("#audio-fill").style.width = pct + "%";
     $("#audio-knob").style.left = pct + "%";
+    $("#audio-track").setAttribute("aria-valuenow", String(Math.round(pct)));
   }
   function resetAudioBar() {
     setBar(0);
-    $("#audio-time").textContent = "0:00 / 0:00";
+    $("#audio-time").textContent = "";
     const bar = $("#audiobar");
-    bar.classList.remove("is-tts");
+    bar.classList.remove("is-tts", "is-dragging");
     bar.classList.add("is-paused");
+    dragging = false;
   }
 
   AudioPlayer.on("progress", function (p) {
-    setBar(p.ratio);
-    if (p.mode === "mp3") $("#audio-time").textContent = fmt(p.current) + " / " + fmt(p.duration);
+    if (!dragging) setBar(p.ratio);
+    $("#audio-time").textContent = p.mode === "mp3" ? fmt(p.current) + " / " + fmt(p.duration)
+      : p.sentences ? "Part " + p.sentence + " of " + p.sentences : "";
   });
   AudioPlayer.on("state", function (s) {
     const bar = $("#audiobar");
-    bar.classList.toggle("is-tts", s.mode === "tts");
+    const tts = s.mode === "tts";
+    bar.classList.toggle("is-tts", tts);
     bar.classList.toggle("is-paused", !s.playing);
     $("#audio-toggle").setAttribute("aria-label", s.playing ? "Pause" : "Play");
+    $("#audio-back").setAttribute("aria-label", tts ? "Previous sentence" : "Back 10 seconds");
+    $("#audio-forward").setAttribute("aria-label", tts ? "Next sentence" : "Forward 10 seconds");
+  });
+
+  /* Speed: tap to cycle. Remembered on this phone. */
+  const SPEEDS = [1, 1.25, 1.5, 0.75];
+  function showRate(r) {
+    const label = (r === 1 ? "1" : String(r).replace(/^0/, "")) + "×";
+    $("#audio-speed").textContent = label;
+    $("#audio-speed").setAttribute("aria-label", "Speed " + label + ". Tap to change.");
+  }
+  AudioPlayer.on("rate", function (r) { showRate(r.rate); save(KEY_RATE, r.rate); });
+
+  /* Seek bar: tap or drag; keyboard arrows skip. */
+  function trackRatio(e) {
+    const rect = $("#audio-track").getBoundingClientRect();
+    return rect.width ? Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) : 0;
+  }
+  const track = $("#audio-track");
+  track.addEventListener("pointerdown", function (e) {
+    dragging = true;
+    $("#audiobar").classList.add("is-dragging");
+    try { track.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    setBar(trackRatio(e));
+    e.preventDefault();
+  });
+  track.addEventListener("pointermove", function (e) { if (dragging) setBar(trackRatio(e)); });
+  function endDrag(e, commit) {
+    if (!dragging) return;
+    dragging = false;
+    $("#audiobar").classList.remove("is-dragging");
+    if (commit) AudioPlayer.seek(trackRatio(e));
+  }
+  track.addEventListener("pointerup", function (e) { endDrag(e, true); });
+  track.addEventListener("pointercancel", function (e) { endDrag(e, false); });
+  track.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      AudioPlayer.skip(e.key === "ArrowLeft" ? -1 : 1);
+      e.preventDefault();
+    }
   });
   AudioPlayer.on("ended", function () {
     setBar(1);
@@ -666,6 +713,12 @@
 
   $("#audio-toggle").addEventListener("click", function () { AudioPlayer.toggle(); });
   $("#audio-replay").addEventListener("click", function () { AudioPlayer.replay(); });
+  $("#audio-back").addEventListener("click", function () { AudioPlayer.skip(-1); });
+  $("#audio-forward").addEventListener("click", function () { AudioPlayer.skip(1); });
+  $("#audio-speed").addEventListener("click", function () {
+    const i = SPEEDS.indexOf(AudioPlayer.getRate());
+    AudioPlayer.setRate(SPEEDS[(i + 1) % SPEEDS.length]);
+  });
 
   $("#toggle-text").addEventListener("change", function (e) {
     state.showText = e.target.checked;
@@ -728,6 +781,9 @@
     renderMap();
     applyShowText();
     probeAssets();
+    const savedRate = parseFloat(load(KEY_RATE));
+    if (SPEEDS.indexOf(savedRate) >= 0) AudioPlayer.setRate(savedRate);
+    else showRate(1);
 
     if (params.get("debug") === "1") $("#debug").hidden = false;
 
