@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
   <!-- VERSION: bump ?v=… on the CSS + JS links below after changing them, so phones and browsers load the new files instead of an old cached copy. -->
-  <link rel="stylesheet" href="css/style.css?v=20261114-9">
+  <link rel="stylesheet" href="css/style.css?v=20261114-10">
 </head>
 <body>
 
@@ -75,6 +75,17 @@
           <path d="M7.5 17.5 h2"/>
           <path d="M16 9.5 a3.5 3.5 0 0 1 0 5"/>
           <path d="M18.6 7 a7 7 0 0 1 0 10"/>
+        </g>
+      </symbol>
+
+      <!-- Longship with a striped sail -->
+      <symbol id="icon-ship" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2.5 15.5 h19 c-1.5 3 -4 4.5 -7 4.5 h-5 c-3 0 -5.5 -1.5 -7 -4.5 Z"/>
+          <path d="M2.5 15.5 c-.5 -2 .3 -3.5 1.8 -4 M21.5 15.5 c.5 -2 -.3 -3.5 -1.8 -4"/>
+          <path d="M12 15.5 V3"/>
+          <path d="M6.5 5 h11 v7.5 h-11 Z"/>
+          <path d="M10.2 5 v7.5 M13.8 5 v7.5"/>
         </g>
       </symbol>
 
@@ -342,6 +353,10 @@
           <svg class="btn__icon btn__icon--spin" aria-hidden="true"><use href="#icon-spinner"/></svg>
           <span class="btn__text" id="scan-text">Connect rune</span>
         </button>
+        <button class="btn btn--ghost btn--sail" type="button" data-action="sail">
+          <svg class="btn__icon" aria-hidden="true"><use href="#icon-ship"/></svg>
+          <span class="btn__text">Sail to Jelling</span>
+        </button>
         <p class="status" id="status" aria-live="polite"></p>
         <p class="label connected" id="connected" aria-live="polite" hidden></p>
         <div class="debug" id="debug" hidden>
@@ -413,6 +428,39 @@
       </div>
     </section>
 
+    <!-- ===================== 3b. SAIL TO JELLING (mini game, sail.js) ===================== -->
+    <section class="screen screen--sail" id="screen-sail" aria-labelledby="sail-title" hidden>
+      <header class="topbar">
+        <button class="icon-btn" type="button" data-action="sail-back" aria-label="Back"><svg aria-hidden="true"><use href="#icon-back"/></svg></button>
+        <div class="topbar__titles">
+          <h2 class="topbar__title" id="sail-title">Sail to Jelling</h2>
+          <p class="label" id="sail-label">Viking voyage</p>
+        </div>
+        <span class="topbar__spacer" aria-hidden="true"></span>
+      </header>
+      <div class="sail">
+        <canvas class="sail__canvas" id="sail-canvas" role="img" aria-label="Longship game. Drag left and right to steer the ship up the fjord."></canvas>
+        <div class="sail__panel" id="sail-intro">
+          <p class="label">A Viking voyage</p>
+          <h3 class="sail__title">Row to King Harald</h3>
+          <p class="sail__text">Steer your longship up the fjord to Jelling. Grab the silver coins and dodge the rocks. Every bump costs 2 coins!</p>
+          <p class="sail__how"><strong>Drag</strong> your finger left and right, or use the <strong>arrow keys</strong>.</p>
+          <button class="btn btn--primary" type="button" data-action="sail-start">Set sail</button>
+        </div>
+        <div class="sail__panel" id="sail-result" hidden aria-live="polite">
+          <p class="label">Land ho!</p>
+          <h3 class="sail__title">You reached Jelling</h3>
+          <p class="sail__gold"><span id="sail-gold">0</span><span class="sail__gold-label" id="sail-gold-label">gold</span></p>
+          <p class="sail__text" id="sail-text"></p>
+          <p class="sail__best" id="sail-best"></p>
+          <div class="stack-actions">
+            <button class="btn btn--primary" type="button" id="sail-again" data-action="sail-again">Sail again</button>
+            <button class="btn btn--ghost" type="button" data-action="sail-back">Done</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===================== 4. FINALE ===================== -->
     <section class="screen screen--finale" id="screen-finale" aria-labelledby="finale-title" hidden>
       <div class="bindrune" aria-hidden="true">
@@ -429,6 +477,10 @@
         <div class="stamp" aria-hidden="true"><svg><use href="#seal"/></svg><span>Quest<br>complete</span></div>
         <div class="stack-actions">
           <button class="btn btn--primary" type="button" data-action="crown">Claim your title</button>
+          <button class="btn btn--ghost btn--sail" type="button" data-action="sail">
+            <svg class="btn__icon" aria-hidden="true"><use href="#icon-ship"/></svg>
+            <span class="btn__text">Sail to Jelling</span>
+          </button>
           <button class="btn btn--ghost" type="button" data-action="home">Back to start</button>
           <button class="textbtn" type="button" data-action="ask-reset">Play again</button>
         </div>
@@ -720,10 +772,11 @@
     </div>
   </div>
 
-  <script src="js/content.js?v=20261114-9"></script>
-  <script src="js/audio.js?v=20261114-9"></script>
-  <script src="js/ble.js?v=20261114-9"></script>
-  <script src="js/keepsakes.js?v=20261114-9"></script>
-  <script src="js/app.js?v=20261114-9"></script>
+  <script src="js/content.js?v=20261114-10"></script>
+  <script src="js/audio.js?v=20261114-10"></script>
+  <script src="js/ble.js?v=20261114-10"></script>
+  <script src="js/keepsakes.js?v=20261114-10"></script>
+  <script src="js/sail.js?v=20261114-10"></script>
+  <script src="js/app.js?v=20261114-10"></script>
 </body>
 </html>

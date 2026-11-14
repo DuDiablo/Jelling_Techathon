@@ -1,7 +1,7 @@
 /* =====================================================================
    HARALD'S QUEST — APP
    Game state, screens, overlays, NFC tags (?rune=N links + Web NFC) and debug (?debug=1).
-   Texts live in content.js, Bluetooth in ble.js, audio in audio.js.
+   Texts live in content.js, Bluetooth in ble.js, audio in audio.js, the longship game in sail.js.
    ===================================================================== */
 
 (function () {
@@ -47,7 +47,9 @@
     members: 2,              // people in the clan: one name each on the rune stone
     startedAt: 0,            // when the quest began (for the certificate's quest time)
     finishedAt: 0,           // when the last rune was found
-    carved: null             // { names, lines } of the last carving, for the keepsakes
+    carved: null,            // { names, lines } of the last carving, for the keepsakes
+    gold: 0,                 // best clan gold from "Sail to Jelling"
+    sailFrom: "map"          // screen to go back to after sailing
   };
 
   function clampProgress(n) {
@@ -67,6 +69,7 @@
       members: state.members,
       startedAt: state.startedAt,
       finishedAt: state.finishedAt,
+      gold: state.gold,
       savedAt: Date.now()
     }));
   }
@@ -93,6 +96,7 @@
     state.members = v.members || state.members;
     state.startedAt = v.startedAt || 0;
     state.finishedAt = v.finishedAt || 0;
+    state.gold = v.gold || 0;
     applyClan();
   }
   function isComplete() { return state.progress >= RUNES.length; }
@@ -104,6 +108,7 @@
   function showScreen(name) {
     if (finishTransition) finishTransition();
     if (name === state.screen) { afterEnter(name); return; }
+    if (state.screen === "sail") Sail.stop();
 
     const from = $("#screen-" + state.screen);
     const to = $("#screen-" + name);
@@ -137,7 +142,43 @@
   function afterEnter(name) {
     if (name === "map" && !state.startedAt) state.startedAt = Date.now();
     if (name === "map") animateMap();
+    if (name === "sail" && !Sail.isRunning()) Sail.preview();
   }
+
+  /* ---------------- Sail to Jelling (sail.js) ---------------- */
+  function openSail() {
+    if (state.screen !== "sail") state.sailFrom = state.screen;
+    $("#sail-intro").hidden = false;
+    $("#sail-result").hidden = true;
+    renderSailLabel();
+    showScreen("sail");
+  }
+  function renderSailLabel() {
+    $("#sail-label").textContent = state.gold ? "Clan gold: " + state.gold : (state.clan ? state.clan.name : "Viking voyage");
+  }
+  function startSail() {
+    $("#sail-intro").hidden = true;
+    $("#sail-result").hidden = true;
+    Sail.start();
+  }
+  function sailEnded(r) {
+    const best = r.gold > state.gold;
+    state.gold = Math.max(state.gold, r.gold);
+    saveVisit();
+    renderSailLabel();
+    const house = state.clan ? " for the " + state.clan.name : "";
+    $("#sail-gold").textContent = r.gold;
+    $("#sail-gold-label").textContent = "gold" + house;
+    $("#sail-text").textContent = "You kept " + r.coins + " of " + r.total + " silver coins" +
+      (r.hits ? " and bumped into something " + r.hits + (r.hits === 1 ? " time." : " times.") : " and never touched a rock!") +
+      (r.bonus ? " Clean voyage bonus: +" + r.bonus + "." : "");
+    $("#sail-best").textContent = best ? "A new record for your clan!"
+      : state.gold ? "Your best: " + state.gold + " gold" : "Steer around the rocks to keep your coins!";
+    $("#sail-result").hidden = false;
+    $("#sail-again").focus();
+  }
+  // A joystick (or anything else) can steer: HaraldJoystick("L" | "R" | "C") or a number from -1 to 1.
+  window.HaraldJoystick = function (v) { Sail.stick(v); };
 
   /* ---------------- Clan: choose your house ---------------- */
   // The clan colour replaces the map seal colours (--ember / --moss) and the crown gems (--gem*).
@@ -979,7 +1020,8 @@
         const end = state.finishedAt || Date.now();
         cv = Keepsakes.certificate({
           names: c.names, lines: c.lines, clan: state.clan, date: new Date(),
-          durationMs: state.startedAt ? end - state.startedAt : 0
+          durationMs: state.startedAt ? end - state.startedAt : 0,
+          gold: state.gold
         });
         file = "ruler-of-the-runes-" + slug(c.names) + ".png";
       } else {
@@ -1047,6 +1089,7 @@
     state.startedAt = 0;
     state.finishedAt = 0;
     state.carved = null;
+    state.gold = 0;
     pendingTagRune = null;
     clearVisit();
     state.drawnProgress = null;
@@ -1148,6 +1191,9 @@
       case "clan-less": state.members--; renderMembers(); saveVisit(); break;
       case "clan-more": state.members++; renderMembers(); saveVisit(); break;
       case "nfc": startNfc(true); break;
+      case "sail": openSail(); break;
+      case "sail-start": case "sail-again": startSail(); break;
+      case "sail-back": showScreen(state.sailFrom || "map"); break;
       case "clan-go":
         if (!state.clan) break;
         if (!state.startedAt) state.startedAt = Date.now();
@@ -1215,6 +1261,10 @@
   });
 
   $("#overlay").addEventListener("click", function () { hideOverlay(true); });
+  Sail.init($("#sail-canvas"), {
+    getClan: function () { return state.clan; },
+    onEnd: sailEnded
+  });
   $("#crown-form").addEventListener("submit", function (e) {
     e.preventDefault();
     carveNames(nameInputs().map(function (inp) { return inp.value; }));

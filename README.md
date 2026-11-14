@@ -107,6 +107,7 @@ docs/                  ← the web app (GitHub Pages serves this folder)
   js/audio.js          MP3 playback with text-to-speech fallback
   js/app.js            game state, screens, chooser, overlays, NFC tags + debug
   js/keepsakes.js      take-home images: rune stone, certificate, alphabet card
+  js/sail.js           "Sail to Jelling" longship mini game (canvas)
   audio/README.md      expected audio file names
   decisions.md         decision log (note: public on GitHub Pages)
 design/  src/          placeholders
@@ -143,6 +144,15 @@ Each rune gets one NFC sticker (NTAG213 or NTAG215) holding a **URL record**:
 - **Chrome on Android:** on the map, tap **Scan NFC tags** once and allow NFC. The app then reads tags while it's open, with no new page.
   - Android remembers the permission, so next time scanning starts by itself.
 - **LED:** a tag can't light the rune's LED. Only a Bluetooth press does that.
+
+## Sail to Jelling (mini game)
+
+A ~30 second longship game, opened from **Sail to Jelling** on the map or the finale screen.
+- Steer up the fjord to Jelling: **drag** a finger left and right, or use the **arrow keys** (A / D).
+- Silver coins are gold for your clan. Every bump into a rock or the bank costs 2 coins. A clean voyage earns a bonus (+5 with no bumps, +2 with up to 2).
+- The clan's best gold is kept with the visit and printed on the **Ruler of the Runes** certificate.
+
+**Joystick (planned):** the game already listens to `HaraldJoystick(x)`, where `x` is a number from -1 (left) to 1 (right), or a direction letter (`"L"`, `"R"`, `"C"`, `"UL"`, …). To steer it from an ESP32 joystick, the firmware would send the direction over a new Bluetooth characteristic, and `ble.js` would pass it to `HaraldJoystick`. That characteristic isn't added yet; the existing UUIDs and LED codes are unchanged.
 
 ## Test checklist (real hardware)
 
