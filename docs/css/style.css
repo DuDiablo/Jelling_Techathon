@@ -289,7 +289,7 @@ body.is-night .vignette, body.is-night .grain { opacity: 0; }
   transform: rotate(-.4deg);
 }
 .note__icon { width: 24px; height: 24px; flex: none; color: var(--ink-soft); margin-top: 2px; }
-.note__text { font-style: italic; color: var(--ink); }
+.note__text { font-style: italic; color: var(--ink); white-space: pre-line; }
 
 /* ---- Card ---- */
 .card {
