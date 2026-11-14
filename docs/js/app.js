@@ -160,6 +160,7 @@
   }
   function sailPanelOpen() { return !$("#sail-intro").hidden || !$("#sail-result").hidden; }
   function startSail() {
+    if (Controller.isConnected()) Controller.sound("click");
     $("#sail-intro").hidden = true;
     $("#sail-result").hidden = true;
     Sail.start();
@@ -211,11 +212,11 @@
   }
   Controller.on("state", renderController);
   Controller.on("input", function (v) { Sail.stick(v.x, v.y); });
-  // The action button: starts / restarts the voyage on a card, "Row!" while sailing.
+  // The action button only shouts "Row!" while sailing. A voyage starts only from the
+  // on-screen Start button, so there's time to connect the joystick first.
   Controller.on("press", function () {
-    if (state.screen !== "sail") return;
-    if (sailPanelOpen()) { Controller.sound("click"); startSail(); }
-    else Sail.action();
+    if (state.screen !== "sail" || sailPanelOpen()) return;
+    Sail.action();
   });
 
   /* ---------------- Clan: choose your house ---------------- */
