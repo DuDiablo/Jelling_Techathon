@@ -564,7 +564,14 @@ body.has-map-bg.is-mapbg .app::before {
   background: none;
   cursor: default;
   color: var(--ink-soft);
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
+.marker:disabled { opacity: 1; }
+.marker.is-collected, .tile.is-collected { cursor: pointer; }
+.marker:focus-visible, .tile:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 50%; }
+.tile:focus-visible { border-radius: var(--radius); }
+.marker.is-collected:active .marker__seal, .tile.is-collected:active { transform: scale(.94); }
 .marker__seal { position: absolute; inset: 0; width: 100%; height: 100%; color: #9b8e78; filter: drop-shadow(0 2px 2px rgba(43, 26, 18, .35)); }
 .marker__glyph {
   position: absolute;
@@ -1308,7 +1315,10 @@ body.is-finale {
   padding: var(--s3) var(--s2) calc(var(--s3) + var(--safe-b));
   overflow: hidden;
   text-align: center;
-  cursor: pointer;
+  cursor: default;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   background:
     radial-gradient(circle at 50% 42%, rgba(230, 199, 122, .35), rgba(122, 82, 30, .25) 22%, transparent 48%),
     radial-gradient(ellipse at center, #3a2416 0%, #1d120b 70%, #0f0905 100%);
@@ -1390,17 +1400,7 @@ body.is-finale {
   color: var(--parchment);
   animation: fadeUp .6s var(--ease) .95s both;
 }
-.unlockfx__skip {
-  position: absolute;
-  left: 0; right: 0;
-  bottom: calc(var(--s3) + var(--safe-b));
-  color: rgba(233, 220, 192, .55);
-  font-size: .62rem;
-  animation: fade .6s ease-out 1.4s both;
-}
-
 @media (max-height: 480px) {
-  .unlockfx__skip { display: none; }
   .unlockfx__label { margin-top: var(--s1); }
 }
 
