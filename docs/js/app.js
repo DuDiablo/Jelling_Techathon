@@ -14,6 +14,7 @@
   const PERSIST_PROGRESS = false;
   // The visit (progress, house, clan size, quest timer) is saved on the phone so NFC tags work:
   // every scanned tag link opens a new page, which picks the visit up again.
+  // Refreshing the page wipes it (hard reset), unless PERSIST_PROGRESS is true.
   const KEY_VISIT = "haraldVisit";
   const VISIT_MAX_AGE_MS = 6 * 60 * 60 * 1000; // a visit older than 6 hours starts fresh
   const KEY_SHOW_TEXT = "haraldShowText";
@@ -75,6 +76,13 @@
       if (!v || Date.now() - (v.savedAt || 0) > VISIT_MAX_AGE_MS) return null;
       return v;
     } catch (e) { return null; }
+  }
+  function pageWasReloaded() {
+    try {
+      const nav = performance.getEntriesByType("navigation")[0];
+      if (nav) return nav.type === "reload";
+      return performance.navigation && performance.navigation.type === 1; // older browsers
+    } catch (e) { return false; }
   }
   function clearVisit() {
     try { localStorage.removeItem(KEY_VISIT); } catch (e) { /* ignore */ }
@@ -1296,11 +1304,20 @@
     if (!RuneBLE.isSupported()) setStatus(NO_BLE_MSG, true);
 
     // NFC tag link (…/?rune=N): pick the saved visit up again and treat it like pressing that rune.
+    // A refresh is a hard reset (while PERSIST_PROGRESS is false): the saved visit is wiped,
+    // so the next tag starts a new quest. Only a page opened *by a tag* continues the visit.
     const tagId = parseInt(params.get("rune"), 10);
-    const tagRune = RUNES.find(function (r) { return r.id === tagId; });
+    const isReload = pageWasReloaded();
+    const tagRune = isReload ? null : RUNES.find(function (r) { return r.id === tagId; });
+    if (!PERSIST_PROGRESS && !tagRune) clearVisit();
     if (tagRune || PERSIST_PROGRESS) {
       const visit = loadVisit();
       if (visit) restoreVisit(visit);
+    }
+    if (isReload && params.has("rune")) {
+      params.delete("rune");
+      const qs = params.toString();
+      try { history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash); } catch (e) { /* ignore */ }
     }
     renderMap();
     renderNfcButton();
