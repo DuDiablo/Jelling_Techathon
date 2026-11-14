@@ -161,7 +161,7 @@ Each rune gets one NFC sticker (NTAG213 or NTAG215) holding a **URL record**:
 
 A ~30 second longship game, the reward for finding all three runes. **Sail to Jelling** appears on the map and the finale screen once the quest is complete.
 - Steer up the fjord to Jelling on **both axes**: left / right, and forward / back on the screen.
-  - **Joystick:** tap **Connect joystick** under the game and choose `RUNE_CONTROLLER`. The stick steers. The button starts the voyage, and while sailing it shouts **Row!** (a burst of speed, then a 3.5 s rest).
+  - **Joystick:** tap **Connect joystick** under the game and choose `RUNE_CONTROLLER`. The stick steers. Connect it first, then press **Start** on the screen; the voyage only starts from that button. While sailing, the joystick button shouts **Row!** (a burst of speed, then a 3.5 s rest).
   - **Phone:** drag to steer, tap to row. **Keyboard:** arrows / WASD, Space to row.
 - The controller plays its sounds: click on a coin, lose on a bump, win at Jelling.
 - Silver coins are gold for your clan. Every bump into a rock or the bank costs 2 coins. A clean voyage earns a bonus (+5 with no bumps, +2 with up to 2).
