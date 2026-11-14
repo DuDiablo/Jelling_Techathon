@@ -109,10 +109,11 @@
     const markers = $("#markers");
     const tiles = $("#tiles");
     RUNES.forEach(function (rune, i) {
-      const m = document.createElement("div");
+      const m = document.createElement("button");
+      m.type = "button";
       m.className = "marker" + (rune.mapX < 32 ? " is-edge-left" : rune.mapX > 68 ? " is-edge-right" : "");
       m.id = "marker-" + i;
-      m.setAttribute("role", "img");
+      m.setAttribute("data-open-rune", String(i));
       m.style.left = rune.mapX + "%";
       m.style.top = rune.mapY + "%";
       m.innerHTML =
@@ -141,12 +142,23 @@
       const m = $("#marker-" + i);
       m.classList.remove("is-locked", "is-next", "is-collected");
       m.classList.add("is-" + status);
-      m.setAttribute("aria-label", rune.room + ": " + (status === "collected" ? "collected" : status === "next" ? "next rune" : "locked"));
+      const collected = status === "collected";
+      m.disabled = !collected;
+      m.setAttribute("aria-label", rune.room + ": " + (collected ? "collected, tap to hear its story again" : status === "next" ? "next rune" : "locked"));
 
       const t = $("#tile-" + i);
-      t.className = "tile" + (status === "collected" ? " is-collected" : "") + (status === "next" ? " is-current" : "");
-      t.textContent = status === "collected" ? rune.symbol : "?";
-      t.setAttribute("aria-label", "Rune " + (i + 1) + ": " + (status === "collected" ? "collected" : "not found yet"));
+      t.className = "tile" + (collected ? " is-collected" : "") + (status === "next" ? " is-current" : "");
+      t.textContent = collected ? rune.symbol : "?";
+      t.setAttribute("aria-label", "Rune " + (i + 1) + ": " + (collected ? "collected, tap to hear its story again" : "not found yet"));
+      if (collected) {
+        t.setAttribute("data-open-rune", String(i));
+        t.setAttribute("role", "button");
+        t.tabIndex = 0;
+      } else {
+        t.removeAttribute("data-open-rune");
+        t.removeAttribute("role");
+        t.removeAttribute("tabindex");
+      }
     });
 
     const next = RUNES[state.progress];
@@ -376,6 +388,14 @@
      conn may be null (NFC / debug): LED writes are skipped.
      opts.keepConnected: true for button presses (stay connected). */
   async function handleRune(id, conn, opts) {
+    if (isUnlockFxPlaying()) {
+      // Don't interrupt the unlock animation; handle this press when it ends.
+      if (pendingPress && pendingPress.conn !== conn && !(pendingPress.opts && pendingPress.opts.keepConnected)) {
+        RuneBLE.disconnect(pendingPress.conn);
+      }
+      pendingPress = { id: id, conn: conn, opts: opts };
+      return;
+    }
     try {
       const index = RUNES.findIndex(function (r) { return r.id === Number(id); });
       if (index < 0) { setStatus("This rune is not part of the quest.", true); return; }
@@ -406,7 +426,8 @@
     hideOverlay(true);
     const index = RUNES.indexOf(rune);
     const final = index === RUNES.length - 1;
-    state.story = { rune: rune, fresh: fresh, final: final };
+    // revisit = reopened from the map: no unlock card, no finale afterwards.
+    state.story = { rune: rune, fresh: fresh, final: final, revisit: !fresh };
 
     $("#story-glyph").textContent = rune.symbol;
     $("#story-kicker").textContent = "Rune " + (index + 1) + " of " + RUNES.length;
@@ -414,15 +435,16 @@
     const p = document.createElement("p");
     p.textContent = rune.text;
     $("#story-text").replaceChildren(p);
-    $("#story-next").textContent = final ? "Continue" : "Back to map";
+    $("#story-next").textContent = final && fresh ? "Continue" : "Back to map";
     resetAudioBar();
 
     // "Rune unlocked" card: the audio waits until the visitor taps Play.
+    // Reopened from the map: straight to the audio bar (paused).
     $("#unlocked-glyph").textContent = rune.symbol;
     $("#unlocked-title").textContent = "Rune " + rune.symbol + " unlocked!";
     $("#unlocked-text").textContent = "Tap play to hear the story of " + rune.room + ".";
-    $("#unlocked").hidden = false;
-    $("#audiobar").hidden = true;
+    $("#unlocked").hidden = !fresh;
+    $("#audiobar").hidden = fresh;
 
     showScreen("story");
     if (fresh) {
@@ -447,34 +469,49 @@
   const UNLOCK_FX_MS = 2600;
   let fxTimer = null;
 
+  let fxPlaying = false;
+  let pendingPress = null;   // last rune press received during the animation
+
+  function isUnlockFxPlaying() { return fxPlaying; }
+
+  /* Always runs its full length: no tap, key or rune press can cut it short. */
   function playUnlockFx(rune) {
     const fx = $("#unlockfx");
     clearTimeout(fxTimer);
+    fxPlaying = true;
     fx.classList.remove("is-leaving");
     fx.hidden = true;
     void fx.offsetWidth; // restart the CSS animations
     $("#unlockfx-glyph").textContent = rune.symbol;
     $("#unlockfx-room").textContent = rune.room;
     fx.hidden = false;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     burstDust($("#unlockfx-dust"), 40, 110, 150, 1300);
-    fxTimer = setTimeout(endUnlockFx, reducedMotion ? 1400 : UNLOCK_FX_MS);
+    fxTimer = setTimeout(endUnlockFx, UNLOCK_FX_MS);
   }
 
   function endUnlockFx() {
     const fx = $("#unlockfx");
     clearTimeout(fxTimer);
-    if (fx.hidden) return;
+    if (fx.hidden) { fxPlaying = false; return; }
     fx.classList.add("is-leaving");
     fxTimer = setTimeout(function () {
       fx.hidden = true;
       fx.classList.remove("is-leaving");
+      fxPlaying = false;
       const play = document.querySelector("[data-action='start-story']");
       if (play && state.screen === "story" && !$("#unlocked").hidden) play.focus();
+      // A rune pressed during the animation is handled now, not dropped.
+      const p = pendingPress;
+      pendingPress = null;
+      if (p) handleRune(p.id, p.conn, p.opts);
     }, reducedMotion ? 0 : 430);
   }
 
   function hideUnlockFx() {
     clearTimeout(fxTimer);
+    fxPlaying = false;
+    pendingPress = null;
     $("#unlockfx").hidden = true;
     $("#unlockfx").classList.remove("is-leaving");
   }
@@ -618,7 +655,7 @@
         else AudioPlayer.replay();
         break;
       case "story-next":
-        if (state.story && state.story.final) showFinale();
+        if (state.story && state.story.final && !state.story.revisit) showFinale();
         else showScreen("map");
         break;
       case "ask-reset": askReset(el); break;
@@ -637,9 +674,27 @@
   });
 
   $("#overlay").addEventListener("click", function () { hideOverlay(true); });
-  $("#unlockfx").addEventListener("click", endUnlockFx);
+  // The unlock animation can't be skipped: swallow every tap/key while it plays.
+  ["click", "pointerdown", "touchstart", "contextmenu"].forEach(function (type) {
+    $("#unlockfx").addEventListener(type, function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+  });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") { hideOverlay(true); endUnlockFx(); closeChooser(); }
+    if (isUnlockFxPlaying()) { e.preventDefault(); e.stopPropagation(); return; }
+    if (e.key === "Escape") { hideOverlay(true); closeChooser(); }
+  }, true);
+
+  // Collected runes on the map / progress tiles reopen their story.
+  function openCollected(target) {
+    const el = target.closest("[data-open-rune]");
+    if (!el || isUnlockFxPlaying()) return false;
+    const i = Number(el.getAttribute("data-open-rune"));
+    if (i < state.progress) showStory(RUNES[i], false);
+    return true;
+  }
+  $("#markers").addEventListener("click", function (e) { openCollected(e.target); });
+  $("#tiles").addEventListener("click", function (e) { openCollected(e.target); });
+  $("#tiles").addEventListener("keydown", function (e) {
+    if ((e.key === "Enter" || e.key === " ") && openCollected(e.target)) e.preventDefault();
   });
 
   /* ---------------- Optional assets ---------------- */
