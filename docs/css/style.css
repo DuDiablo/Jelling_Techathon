@@ -1113,6 +1113,136 @@ body.is-finale {
   .bindrune__glyph { font-size: 5.5rem; }
 }
 
+/* ---------- Rune chooser sheet ---------- */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--s2) var(--s2) 0;
+  background: rgba(30, 18, 10, .55);
+  animation: fade .25s both;
+}
+.sheet.is-leaving { animation: fxOut .2s ease-in both; }
+.sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100dvh - var(--s4));
+  overflow-y: auto;
+  padding: var(--s4) var(--s3) calc(var(--s3) + var(--safe-b));
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 30% 0%, rgba(255, 248, 228, .8), transparent 60%),
+    linear-gradient(180deg, #f3e9d2, var(--parchment));
+  border: 1px solid rgba(90, 70, 50, .45);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 -10px 40px rgba(20, 10, 4, .5), inset 0 0 0 5px rgba(243, 233, 210, .6), inset 0 0 0 6px rgba(201, 161, 74, .6);
+  animation: slideUp .35s var(--ease) both;
+}
+.sheet__close { position: absolute; top: var(--s1); right: var(--s1); }
+.sheet__title {
+  margin-top: 4px;
+  font-family: var(--font-head);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  color: var(--blood);
+}
+.sheet__panel .knot { margin: var(--s1) auto; }
+.sheet__text { font-style: italic; color: var(--ink-soft); }
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: var(--s2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  min-height: 68px;
+  padding: var(--s1) var(--s2) var(--s1) var(--s1);
+  text-align: left;
+  border: 1px solid rgba(90, 70, 50, .45);
+  border-radius: var(--radius);
+  background: rgba(255, 249, 232, .55);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s, background .15s;
+}
+.choice:hover:not(:disabled) { background: rgba(255, 249, 232, .9); }
+.choice:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 6px rgba(43, 26, 18, .25); }
+.choice:disabled { cursor: default; opacity: .75; }
+.choice__seal {
+  position: relative;
+  flex: none;
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--gold-light);
+  isolation: isolate;
+}
+.choice__seal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--seal-color, #9b8e78);
+  -webkit-mask: var(--seal-mask) center / contain no-repeat;
+  mask: var(--seal-mask) center / contain no-repeat;
+  filter: drop-shadow(0 2px 2px rgba(43, 26, 18, .35));
+}
+.choice.is-next { border-color: var(--ember); box-shadow: 0 0 0 1px var(--ember), var(--shadow-sm); }
+.choice.is-next .choice__seal { --seal-color: var(--ember); }
+.choice.is-collected .choice__seal { --seal-color: var(--moss); }
+.choice.is-locked .choice__seal { color: rgba(43, 26, 18, .6); }
+.choice__body { flex: 1; min-width: 0; }
+.choice__room { display: block; font-family: var(--font-head); font-weight: 700; letter-spacing: .04em; color: var(--ink); }
+.choice__state { display: block; font-size: .92rem; font-style: italic; color: var(--ink-soft); }
+.choice.is-next .choice__state { color: var(--ember); color: #9a4313; }
+.choice__tag {
+  flex: none;
+  font-family: var(--font-head);
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+.chooser, .sheet__panel { --seal-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M94.5 50L96.3 58.2L93.7 65.9L90.7 73.5L85.2 79.6L80.2 86L72.8 89.4L66.1 94.2L57.8 94.3L50 97L42.3 93.8L33.9 94.2L26.8 90.3L19.8 86L14.8 79.6L9.3 73.5L7.2 65.6L3.7 58.2L5 50L3.7 41.8L8.2 34.8L9.3 26.5L14.4 20.1L19.8 14L27 10.2L33.9 5.8L42.1 5.2L50 3L57.8 5.7L66.1 5.8L72.3 11.5L80.2 14L85.6 20.1L90.7 26.5L93.2 34.3L96.3 41.8Z'/%3E%3C/svg%3E"); }
+
+.sheet__hint {
+  display: flex;
+  gap: var(--s1);
+  align-items: flex-start;
+  margin-top: var(--s2);
+  padding: var(--s1) var(--s2);
+  text-align: left;
+  font-size: .95rem;
+  color: var(--ink-soft);
+  border: 1px dashed rgba(90, 70, 50, .45);
+  border-radius: var(--radius);
+}
+.sheet__hint svg { width: 20px; height: 20px; flex: none; margin-top: 2px; }
+.sheet__any { margin-top: var(--s1); color: var(--ink-soft); font-size: .75rem; }
+
+@media (min-width: 600px) {
+  .sheet { align-items: center; padding: var(--s3); }
+  .sheet__panel { border-radius: 4px; border-bottom: 1px solid rgba(90, 70, 50, .45); }
+}
+
 /* ---------- Full-screen "rune unlocked" moment ---------- */
 .unlockfx {
   position: fixed;

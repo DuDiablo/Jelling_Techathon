@@ -116,6 +116,9 @@
       <symbol id="icon-back" viewBox="0 0 24 24">
         <path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="M6 6 L18 18 M18 6 L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
       <symbol id="icon-chevron" viewBox="0 0 24 24">
         <path d="M6 9 L12 15 L18 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </symbol>
@@ -371,6 +374,23 @@
     <p class="unlockfx__label">Rune unlocked</p>
     <p class="unlockfx__room" id="unlockfx-room"></p>
     <p class="label unlockfx__skip">Tap to continue</p>
+  </div>
+
+  <!-- ===================== Rune chooser (our own step before the browser's Bluetooth window) ===================== -->
+  <div class="sheet" id="chooser" hidden>
+    <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="chooser-title" aria-describedby="chooser-text">
+      <button class="icon-btn sheet__close" type="button" data-action="close-chooser" aria-label="Close"><svg aria-hidden="true"><use href="#icon-close"/></svg></button>
+      <p class="label">Bluetooth</p>
+      <h2 class="sheet__title" id="chooser-title">Wake a rune</h2>
+      <svg class="knot knot--small" aria-hidden="true"><use href="#knot"/></svg>
+      <p class="sheet__text" id="chooser-text">Which rune are you standing next to?</p>
+      <ul class="choices" id="chooser-list"></ul>
+      <p class="sheet__hint" id="chooser-hint">
+        <svg aria-hidden="true"><use href="#icon-scan"/></svg>
+        <span>Your phone will ask once: tap the rune's name, then <strong>Pair</strong>.</span>
+      </p>
+      <button class="textbtn sheet__any" type="button" data-action="choose-any">Not sure? Show all runes</button>
+    </div>
   </div>
 
   <!-- ===================== Feedback overlay ===================== -->
