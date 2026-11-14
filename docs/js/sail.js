@@ -1,6 +1,8 @@
 /* Harald's Quest — "Sail to Jelling"
-   A ~30 second longship game on a <canvas>: steer up the fjord, dodge rocks and the
-   banks, pick up silver coins and land at Jelling. Hitting something costs 2 coins.
+   A ~30 second longship game on a <canvas>: steer up the fjord, dodge rune-carved skerries,
+   the coils of Jormungandr (the Midgard Serpent) and the banks, grab Odin's gold rings
+   and land at Jelling. Hitting something costs 2 rings. Huginn and Muninn fly overhead
+   and the northern lights shimmer on the water.
    The ship moves on both axes: X = left / right, Y = forward / back on the screen.
    Controls: drag a finger (the ship follows the drag), arrow keys / WASD + Space,
    or the RUNE_CONTROLLER joystick via Sail.stick(x, y) and Sail.action().
@@ -13,6 +15,8 @@ const Sail = (function () {
   const HIT_COST = 2;
   const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const FONT_HEAD = '"Cinzel", Georgia, serif';
+  const FONT_RUNE = '"Noto Sans Runic", "Segoe UI Historic", "Segoe UI Symbol", sans-serif';
+  const FUTHARK = ["ᚠ", "ᚢ", "ᚦ", "ᚬ", "ᚱ", "ᚴ", "ᚼ", "ᚾ", "ᛁ", "ᛅ", "ᛋ", "ᛏ", "ᛒ", "ᛘ", "ᛚ", "ᛦ"];
 
   let cv = null, ctx = null, opts = {};
   let LH = 640, scale = 1, dpr = 1;
@@ -56,15 +60,33 @@ const Sail = (function () {
   /* ---------- a new run ---------- */
   function newRun() {
     const r = rng(Date.now());
-    const rocks = [], coins = [];
+    const rocks = [], coins = [], serpents = [];
+    // Jormungandr rises in a few places: a row of coils from one bank, a gap on the other side
+    for (let d = 1300 + r() * 300; d < LENGTH - 800; d += 1050 + r() * 350) {
+      const fromLeft = r() < 0.5;
+      const hw = halfW(d);
+      const span = hw * 2 * (0.5 + r() * 0.12);        // how much of the fjord the coils cover
+      const n = Math.max(2, Math.round(span / 36));
+      const coils = [];
+      for (let i = 0; i < n; i++) {
+        const f = (i + 0.5) / n;
+        coils.push({ ox: (fromLeft ? -hw + f * span : hw - f * span), r: 15 });
+      }
+      serpents.push({ d: d, coils: coils, fromLeft: fromLeft, phase: r() * 6, seen: false });
+    }
+    function nearSerpent(d) { return serpents.some(function (sp) { return Math.abs(sp.d - d) < 110; }); }
     for (let d = 520; d < LENGTH - 520; d += 150 + r() * 130) {
+      if (nearSerpent(d)) continue;
       const n = r() < 0.25 ? 2 : 1;
       for (let k = 0; k < n; k++) {
         const hw = halfW(d) - 30;
         const rad = 11 + r() * 10;
         const pts = [];
         for (let i = 0; i < 8; i++) pts.push(0.78 + r() * 0.34);
-        rocks.push({ d: d + k * 40, x: center(d) + (r() * 2 - 1) * hw, r: rad, pts: pts, rot: r() * 6 });
+        rocks.push({
+          d: d + k * 40, x: center(d) + (r() * 2 - 1) * hw, r: rad, pts: pts, rot: r() * 6,
+          rune: r() < 0.4 ? FUTHARK[Math.floor(r() * FUTHARK.length)] : null   // a carved skerry
+        });
       }
     }
     for (let d = 380; d < LENGTH - 300; d += 250 + r() * 170) {
@@ -72,7 +94,7 @@ const Sail = (function () {
       let off = 0, ok = false;
       for (let tries = 0; tries < 8 && !ok; tries++) {
         off = (r() * 2 - 1) * (halfW(d) - 36);
-        ok = !rocks.some(function (k) {
+        ok = !nearSerpent(d) && !nearSerpent(d + count * 34) && !rocks.some(function (k) {
           return k.d > d - 50 && k.d < d + count * 34 + 50 && Math.abs(k.x - (center(k.d) + off)) < k.r + 30;
         });
       }
@@ -89,7 +111,7 @@ const Sail = (function () {
       phase: "count", countT: 3.2,
       speedMul: 1, invuln: 0, shake: 0,
       coins: 0, hits: 0, gold: 0,
-      rocks: rocks, coinList: coins, pops: [], trail: [],
+      rocks: rocks, coinList: coins, serpents: serpents, pops: [], trail: [], banner: null,
       startedAt: 0, endT: 0, total: coins.length
     };
   }
@@ -166,6 +188,7 @@ const Sail = (function () {
     }
 
     g.pops = g.pops.filter(function (p) { p.life -= dt; p.y -= 34 * dt; return p.life > 0; });
+    if (g.banner) { g.banner.life -= dt; if (g.banner.life <= 0) g.banner = null; }
 
     if (g.endT && g.t - g.endT > 1.6) finish();   // let them see the landing first
   }
@@ -209,6 +232,24 @@ const Sail = (function () {
         }
       });
     });
+    // Jormungandr's coils (they sway, so check where they are right now)
+    g.serpents.forEach(function (sp) {
+      if (!sp.seen && sy(sp.d) > -10) {
+        sp.seen = true;
+        g.banner = { text: "Jörmungandr rises!", sub: "The Midgard Serpent", life: 2.2 };
+      }
+      if (Math.abs(sp.d - boatD()) > 70) return;
+      sp.coils.forEach(function (c) {
+        const cx = coilX(sp, c);
+        circles.forEach(function (sc) {
+          const dx = sc.x - cx, dd = sc.d - sp.d, rr = sc.r + c.r;
+          if (dx * dx + dd * dd < rr * rr) {
+            g.x += (dx >= 0 ? 1 : -1) * 7;
+            hit();
+          }
+        });
+      });
+    });
     // coins
     g.coinList.forEach(function (k) {
       if (k.taken || Math.abs(k.d - boatD()) > 40) return;
@@ -221,6 +262,8 @@ const Sail = (function () {
       }
     });
   }
+
+  function coilX(sp, c) { return center(sp.d) + c.ox + Math.sin(g.t * 1.3 + sp.phase) * 12; }
 
   function sound(kind) { if (opts.onSound) { try { opts.onSound(kind); } catch (e) { /* ignore */ } } }
 
@@ -261,13 +304,16 @@ const Sail = (function () {
     if (g && g.shake > 0) ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 4);
     drawWater();
     if (g) {
+      drawAurora();
       drawWaves();
       drawShore();
       drawBanks();
       drawRocks();
+      drawSerpents();
       drawCoins();
       drawWake();
       drawShip();
+      drawRavens();
       drawPops();
     }
     ctx.restore();
@@ -276,10 +322,40 @@ const Sail = (function () {
 
   function drawWater() {
     const grd = ctx.createLinearGradient(0, 0, 0, LH);
-    grd.addColorStop(0, "#1b4560");
-    grd.addColorStop(1, "#2b6d88");
+    grd.addColorStop(0, "#102f45");
+    grd.addColorStop(0.55, "#17435d");
+    grd.addColorStop(1, "#245f78");
     ctx.fillStyle = grd;
     ctx.fillRect(-10, -10, LW + 20, LH + 20);
+  }
+
+  // Northern lights reflected on the water: slow green and violet ribbons.
+  function drawAurora() {
+    const t = g ? g.t : 0;
+    const bands = [
+      { c: "111, 227, 176", y: 0.16, a: 0.26, s: 0.11 },
+      { c: "164, 128, 255", y: 0.33, a: 0.18, s: 0.08 },
+      { c: "111, 227, 176", y: 0.56, a: 0.12, s: 0.13 }
+    ];
+    bands.forEach(function (b, i) {
+      const yc = LH * b.y + Math.sin(t * 0.4 + i) * 10;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(-10, yc);
+      for (let x = -10; x <= LW + 10; x += 20) {
+        ctx.lineTo(x, yc + Math.sin(x / 55 + t * b.s * 6 + i * 2) * 16);
+      }
+      ctx.lineTo(LW + 10, yc + 70);
+      ctx.lineTo(-10, yc + 70);
+      ctx.closePath();
+      const grd = ctx.createLinearGradient(0, yc - 20, 0, yc + 70);
+      grd.addColorStop(0, "rgba(" + b.c + ", 0)");
+      grd.addColorStop(0.3, "rgba(" + b.c + ", " + b.a + ")");
+      grd.addColorStop(1, "rgba(" + b.c + ", 0)");
+      ctx.fillStyle = grd;
+      ctx.fill();
+      ctx.restore();
+    });
   }
 
   function drawWaves() {
@@ -331,7 +407,7 @@ const Sail = (function () {
       pts.forEach(function (p) { ctx.lineTo(p.x, p.y); });
       ctx.lineTo(outer, LH + 20);
       ctx.closePath();
-      ctx.fillStyle = "#5b7a3c";
+      ctx.fillStyle = "#47643a";
       ctx.fill();
       // rocky edge
       ctx.strokeStyle = "#6d675c";
@@ -342,7 +418,7 @@ const Sail = (function () {
       ctx.beginPath();
       pts.forEach(function (p, i) { const x = p.x + side * 2; if (i) ctx.lineTo(x, p.y); else ctx.moveTo(x, p.y); });
       ctx.stroke();
-      // a few pine trees on the land
+      // pines, burial mounds, standing runestones and watch-fires on the land
       const step = 70;
       const first = Math.floor((g.d - (LH - shipY()) - 60) / step);
       const lastRow = Math.ceil((g.d + shipY() + 60) / step);
@@ -352,7 +428,12 @@ const Sail = (function () {
         const dist = 30 + hash(k * 11 + side) * 70;
         const x = edge + side * dist;
         if (x < -20 || x > LW + 20) continue;
-        tree(x, sy(d), 9 + hash(k * 17 + side) * 6);
+        const kind = hash(k * 23 + side * 7);
+        const size = 9 + hash(k * 17 + side) * 6;
+        if (kind < 0.55) tree(x, sy(d), size);
+        else if (kind < 0.75) mound(x, sy(d), size * 1.5);
+        else if (kind < 0.9) landStone(x, sy(d), FUTHARK[Math.floor(hash(k * 31 + side) * FUTHARK.length)]);
+        else fire(x, sy(d), k);
       }
     });
   }
@@ -364,6 +445,40 @@ const Sail = (function () {
     ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#3f6a33";
     ctx.beginPath(); ctx.arc(x - s * 0.25, y - s * 0.25, s * 0.55, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function mound(x, y, s) {
+    ctx.fillStyle = "rgba(0,0,0,.22)";
+    ctx.beginPath(); ctx.ellipse(x + 4, y + 4, s, s * 0.9, 0, 0, Math.PI * 2); ctx.fill();
+    const grd = ctx.createRadialGradient(x - s * 0.3, y - s * 0.3, 1, x, y, s);
+    grd.addColorStop(0, "#7c9d55");
+    grd.addColorStop(1, "#3d5a2f");
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.ellipse(x, y, s, s * 0.9, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  function landStone(x, y, rune) {
+    ctx.fillStyle = "rgba(0,0,0,.25)";
+    roundRect(x - 5, y - 8, 13, 19, 5); ctx.fill();
+    ctx.fillStyle = "#a39d92";
+    roundRect(x - 7, y - 10, 13, 19, 5); ctx.fill();
+    ctx.fillStyle = "#b5462f";                       // runestones were painted red
+    ctx.font = "11px " + FONT_RUNE;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(rune, x - 0.5, y);
+    ctx.textBaseline = "alphabetic";
+  }
+  function fire(x, y, k) {
+    const f = Math.sin(g.t * 9 + k) * 0.5 + 0.5;
+    const glow = ctx.createRadialGradient(x, y, 1, x, y, 18);
+    glow.addColorStop(0, "rgba(255, 190, 90, .55)");
+    glow.addColorStop(1, "rgba(255, 140, 40, 0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#e0662a";
+    ctx.beginPath(); ctx.arc(x, y, 4.5 + f * 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffd36b";
+    ctx.beginPath(); ctx.arc(x, y - 0.5, 2.2 + f, 0, Math.PI * 2); ctx.fill();
   }
 
   function drawShore() {
@@ -388,8 +503,17 @@ const Sail = (function () {
     ctx.stroke();
     ctx.fillStyle = "#6a8a45";
     ctx.fillRect(-20, -40, LW + 40, y - 28 + 40);
-    // the white church and the two great stones
+    // Jelling: the two great burial mounds, the stone ship around them, the church and the stones
     const cy = y - 92, cx = LW / 2;
+    // the stone ship: a long ring of standing stones
+    ctx.fillStyle = "#c9c2b4";
+    for (let i = 0; i < 44; i++) {
+      const a = i / 44 * Math.PI * 2;
+      const sx = cx + Math.cos(a) * (LW * 0.46), sy2 = cy - 4 + Math.sin(a) * 58 * (1 - 0.35 * Math.abs(Math.cos(a)));
+      ctx.beginPath(); ctx.arc(sx, sy2, 2.4, 0, Math.PI * 2); ctx.fill();
+    }
+    mound(cx - LW * 0.3, cy - 8, 34);
+    mound(cx + LW * 0.3, cy - 8, 34);
     ctx.fillStyle = "rgba(0,0,0,.2)";
     ctx.fillRect(cx - 36 + 4, cy - 26 + 4, 72, 40);
     ctx.fillStyle = "#f4efe4";
@@ -429,6 +553,18 @@ const Sail = (function () {
       blob(k, y - 2, 0.7, "#837d72");
       ctx.fillStyle = "rgba(255,255,255,.18)";
       ctx.beginPath(); ctx.arc(k.x - k.r * 0.3, y - k.r * 0.35, k.r * 0.25, 0, Math.PI * 2); ctx.fill();
+      if (k.rune) {
+        const glow = 0.55 + Math.sin(g.t * 2.5 + k.rot) * 0.25;
+        ctx.save();
+        ctx.shadowColor = "rgba(120, 230, 210, .9)";
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = "rgba(170, 245, 225, " + glow + ")";
+        ctx.font = Math.round(k.r * 1.35) + "px " + FONT_RUNE;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(k.rune, k.x, y - 1);
+        ctx.restore();
+      }
     });
   }
   function blob(k, y, s, colour) {
@@ -443,23 +579,123 @@ const Sail = (function () {
     ctx.fill();
   }
 
+  // Jormungandr: scaly coils arching out of the water, the head at the open end.
+  function drawSerpents() {
+    g.serpents.forEach(function (sp) {
+      const y = sy(sp.d);
+      if (y < -60 || y > LH + 60) return;
+      const bob = Math.sin(g.t * 2 + sp.phase);
+      sp.coils.forEach(function (c, i) {
+        const x = coilX(sp, c);
+        const rise = 1 + 0.08 * Math.sin(g.t * 2.4 + i);
+        // ripples where the body meets the water
+        ctx.strokeStyle = "rgba(235, 248, 255, .45)";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(x, y + 3, c.r + 5, 6, 0, 0, Math.PI * 2); ctx.stroke();
+        // shadow, body, belly stripe and scales
+        ctx.lineCap = "round";
+        ctx.strokeStyle = "rgba(0,0,0,.3)";
+        ctx.lineWidth = 12;
+        ctx.beginPath(); ctx.ellipse(x + 3, y + 4, c.r, c.r * 0.75 * rise, 0, Math.PI, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = "#1f5546";
+        ctx.lineWidth = 12;
+        ctx.beginPath(); ctx.ellipse(x, y, c.r, c.r * 0.75 * rise, 0, Math.PI, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = "#6fc2a0";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.ellipse(x, y - 1.5, c.r, c.r * 0.75 * rise, 0, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+        ctx.fillStyle = "#173f34";
+        for (let k = 1; k < 5; k++) {
+          const a = Math.PI + k / 5 * Math.PI;
+          ctx.beginPath(); ctx.arc(x + Math.cos(a) * c.r, y + Math.sin(a) * c.r * 0.75 * rise + 2.5, 1.4, 0, Math.PI * 2); ctx.fill();
+        }
+      });
+      // the head at the open end of the row, looking at the gap
+      const last = sp.coils[sp.coils.length - 1];
+      const dir = sp.fromLeft ? 1 : -1;
+      const hx = coilX(sp, last) + dir * (last.r + 17), hy = y - 6 + bob * 2;
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.scale(dir * 1.35, 1.35);
+      ctx.fillStyle = "rgba(0,0,0,.3)";
+      ctx.beginPath(); ctx.ellipse(3, 4, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#245c4c";
+      ctx.beginPath(); ctx.ellipse(0, 0, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-6, -5); ctx.lineTo(-12, -11); ctx.lineTo(-2, -6); ctx.fill();   // horn / fin
+      ctx.fillStyle = "#5fae8f";
+      ctx.beginPath(); ctx.ellipse(1, -2, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffd36b";                                                                  // eye
+      ctx.beginPath(); ctx.arc(4, -2.5, 1.8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#1a1208";
+      ctx.fillRect(3.6, -3.8, 0.9, 2.6);
+      ctx.strokeStyle = "#c0392b";                                                                // forked tongue
+      ctx.lineWidth = 1.2;
+      const flick = Math.sin(g.t * 12 + sp.phase) > 0 ? 4 : 1;
+      ctx.beginPath(); ctx.moveTo(11, 1); ctx.lineTo(13 + flick, 1); ctx.lineTo(15 + flick, -1); ctx.moveTo(13 + flick, 1); ctx.lineTo(15 + flick, 3); ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  // Huginn and Muninn, Odin's ravens, cross the sky now and then (just for show).
+  function drawRavens() {
+    const period = 9;
+    const cycle = Math.floor(g.t / period);
+    const tt = (g.t % period) / 3.2;               // 0..1 while crossing
+    if (tt > 1) return;
+    const fromLeft = hash(cycle * 3) < 0.5;
+    const y0 = LH * (0.15 + hash(cycle * 5) * 0.35);
+    [0, 1].forEach(function (i) {
+      const p = tt - i * 0.08;
+      const x = fromLeft ? lerp(-30, LW + 30, p) : lerp(LW + 30, -30, p);
+      const y = y0 + i * 22 + Math.sin(p * 6) * 6;
+      const flap = Math.sin(g.t * 11 + i * 2);
+      const dir = fromLeft ? 1 : -1;
+      // shadow on the water
+      raven(x + 14, y + 26, flap, dir, "rgba(0,0,0,.22)");
+      raven(x, y, flap, dir, "#141016");
+    });
+  }
+  function raven(x, y, flap, dir, colour) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(dir, 1);
+    ctx.fillStyle = colour;
+    ctx.beginPath(); ctx.ellipse(0, 0, 7, 2.6, 0, 0, Math.PI * 2); ctx.fill();         // body
+    ctx.beginPath(); ctx.arc(7, -0.5, 2.3, 0, Math.PI * 2); ctx.fill();                  // head
+    ctx.beginPath(); ctx.moveTo(9, -1); ctx.lineTo(12, 0); ctx.lineTo(9, 0.8); ctx.fill(); // beak
+    ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-11, -2.5); ctx.lineTo(-11, 2.5); ctx.fill(); // tail
+    const w = 9 + flap * 4;
+    ctx.beginPath(); ctx.moveTo(-2, 0); ctx.quadraticCurveTo(0, -w, 4, -w * 1.1); ctx.lineTo(3, 0); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-2, 0); ctx.quadraticCurveTo(0, w, 4, w * 1.1); ctx.lineTo(3, 0); ctx.fill();
+    ctx.restore();
+  }
+
+  // Odin's gold rings (like Draupnir), spinning as they float.
+  function goldRing(x, y, sx, size) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sx, 1);
+    ctx.lineWidth = size * 0.42;
+    ctx.strokeStyle = "#8a6420";
+    ctx.beginPath(); ctx.arc(0.6, 0.8, size * 0.72, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "#e6c77a";
+    ctx.beginPath(); ctx.arc(0, 0, size * 0.72, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "#fff1c4";
+    ctx.lineWidth = size * 0.14;
+    ctx.beginPath(); ctx.arc(0, 0, size * 0.72, Math.PI * 1.1, Math.PI * 1.6); ctx.stroke();
+    ctx.restore();
+  }
   function drawCoins() {
     g.coinList.forEach(function (k) {
       if (k.taken) return;
       const y = sy(k.d);
       if (y < -20 || y > LH + 20) return;
-      const sx = Math.max(0.2, Math.abs(Math.cos(g.t * 3 + k.phase)));
-      ctx.save();
-      ctx.translate(k.x, y);
-      ctx.scale(sx, 1);
-      ctx.fillStyle = "rgba(255, 230, 150, .25)";
-      ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#e6c77a";
-      ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "#a9802f";
-      ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.stroke();
-      ctx.restore();
+      const sx = Math.max(0.25, Math.abs(Math.cos(g.t * 3 + k.phase)));
+      const glow = ctx.createRadialGradient(k.x, y, 1, k.x, y, 15);
+      glow.addColorStop(0, "rgba(255, 225, 140, .35)");
+      glow.addColorStop(1, "rgba(255, 225, 140, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(k.x, y, 15, 0, Math.PI * 2); ctx.fill();
+      goldRing(k.x, y, sx, 10);
     });
   }
 
@@ -527,11 +763,19 @@ const Sail = (function () {
         ctx.strokeStyle = "#3a2412"; ctx.lineWidth = 0.8; ctx.stroke();
       });
     }
-    // dragon head at the bow, tail curl at the stern
+    // dragon head (with gold eyes) at the bow, curled tail at the stern
     ctx.strokeStyle = "#4e2f16";
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(0, -30); ctx.quadraticCurveTo(-5, -38, 0, -41); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, 30); ctx.quadraticCurveTo(5, 37, 0, 39); ctx.stroke();
+    ctx.lineWidth = 3.4;
+    ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(0, -29); ctx.quadraticCurveTo(-4, -36, 0, -40); ctx.stroke();
+    ctx.fillStyle = "#6b4220";
+    ctx.beginPath(); ctx.ellipse(0, -43, 4.2, 5.6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-3.5, -46); ctx.lineTo(-6, -51); ctx.lineTo(-1.5, -47.5); ctx.fill();   // horns
+    ctx.beginPath(); ctx.moveTo(3.5, -46); ctx.lineTo(6, -51); ctx.lineTo(1.5, -47.5); ctx.fill();
+    ctx.fillStyle = "#e6c77a";
+    ctx.beginPath(); ctx.arc(-1.9, -44.5, 1.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(1.9, -44.5, 1.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, 30); ctx.quadraticCurveTo(6, 37, 1, 40); ctx.quadraticCurveTo(-3, 38, 0, 36); ctx.stroke();
     // sail (seen from above: a striped yard across the ship)
     ctx.save();
     ctx.translate(0, -2);
@@ -581,14 +825,18 @@ const Sail = (function () {
     roundRect(bx, by - 3, Math.max(6, bw * p), 6, 3); ctx.fill();
     ctx.fillStyle = "#f3e9d2";
     ctx.beginPath(); ctx.arc(bx + bw * p, by, 5, 0, Math.PI * 2); ctx.fill();
+    // Jelling's bind-rune at the end of the voyage
+    ctx.fillStyle = "#e6c77a";
+    ctx.font = "13px " + FONT_RUNE;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("ᛒ", bx + bw + 1, by);
+    ctx.textBaseline = "alphabetic";
     // coins
     const cx = LW - 80;
     ctx.fillStyle = "rgba(20, 12, 8, .55)";
     roundRect(cx, by - 13, 66, 26, 13); ctx.fill();
-    ctx.fillStyle = "#e6c77a";
-    ctx.beginPath(); ctx.arc(cx + 15, by, 7, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#a9802f"; ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.arc(cx + 15, by, 4.5, 0, Math.PI * 2); ctx.stroke();
+    goldRing(cx + 15, by, 1, 8);
     ctx.fillStyle = "#f3e9d2";
     ctx.font = "700 15px " + FONT_HEAD;
     ctx.textAlign = "left";
@@ -605,6 +853,24 @@ const Sail = (function () {
       roundRect(cx + 2, by + 19, Math.max(4, 62 * ready), 4, 2); ctx.fill();
     }
 
+    if (g.banner) {
+      const a = clamp(g.banner.life / 0.4, 0, 1) * clamp((2.2 - g.banner.life) / 0.3, 0, 1);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = "rgba(10, 30, 26, .7)";
+      roundRect(LW / 2 - 120, 44, 240, 52, 10); ctx.fill();
+      ctx.strokeStyle = "rgba(95, 174, 143, .9)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#bff3df";
+      ctx.font = "700 17px " + FONT_HEAD;
+      ctx.fillText(g.banner.text, LW / 2, 67);
+      ctx.font = "italic 14px " + '"EB Garamond", Georgia, serif';
+      ctx.fillStyle = "#f3e9d2";
+      ctx.fillText(g.banner.sub, LW / 2, 86);
+      ctx.globalAlpha = 1;
+    }
+
     if (g.phase === "count") {
       const n = Math.ceil(g.countT - 0.2);
       const text = n > 0 ? String(n) : "Row!";
@@ -616,7 +882,7 @@ const Sail = (function () {
       ctx.fillStyle = "#f3e9d2";
       ctx.fillText(text, LW / 2, LH * 0.42);
       ctx.font = "italic 17px " + '"EB Garamond", Georgia, serif';
-      ctx.fillText(opts.hint ? opts.hint() : "Drag to steer. Dodge the rocks!", LW / 2, LH * 0.42 + 36);
+      ctx.fillText(opts.hint ? opts.hint() : "Drag to steer. Beware the serpent!", LW / 2, LH * 0.42 + 36);
     }
   }
   function roundRect(x, y, w, h, r) {

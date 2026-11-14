@@ -164,7 +164,8 @@ A ~30 second longship game, the reward for finding all three runes. **Sail to Je
   - **Joystick:** tap **Connect joystick** under the game and choose `RUNE_CONTROLLER`. The stick steers. Connect it first, then press **Start** on the screen; the voyage only starts from that button. While sailing, the joystick button shouts **Row!** (a burst of speed, then a 3.5 s rest).
   - **Phone:** drag to steer, tap to row. **Keyboard:** arrows / WASD, Space to row.
 - The controller plays its sounds: click on a coin, lose on a bump, win at Jelling.
-- Silver coins are gold for your clan. Every bump into a rock or the bank costs 2 coins. A clean voyage earns a bonus (+5 with no bumps, +2 with up to 2).
+- Odin's gold rings are gold for your clan. Every bump into a rune skerry, Jörmungandr's coils or the bank costs 2 rings. A clean voyage earns a bonus (+5 with no bumps, +2 with up to 2).
+- Norse look: a dragon ship in your house colours, the Midgard Serpent rising in the fjord, Huginn and Muninn flying over, northern lights on the water, burial mounds, runestones and watch-fires on the banks, and Jelling's two mounds and stone ship at the end.
 - The clan's best gold is kept with the visit and printed on the **Ruler of the Runes** certificate.
 
 **Testing without the controller:** in the browser console, `HaraldJoystick(1, 0)` steers right, and `Controller._feed("0,1,1")` acts like the controller sending "forward + button".
