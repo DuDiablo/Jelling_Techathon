@@ -817,6 +817,13 @@
         else showScreen("map");
         break;
       case "crown": showCrown(); break;
+      // ?debug=1 shortcuts for testing the ending (collect all runes, then jump).
+      case "debug-finale":
+        setProgress(RUNES.length); renderMap(); showFinale();
+        break;
+      case "debug-crown":
+        setProgress(RUNES.length); renderMap(); showCrown();
+        break;
       case "crown-again":
         resetCrownForm();
         $("#crown-name").value = "";
