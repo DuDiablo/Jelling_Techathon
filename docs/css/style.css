@@ -1957,3 +1957,73 @@ html:has(body.is-night) { background-color: var(--jg-night); }
 /* Rune glyphs that fonts draw half-height (see SHORT_GLYPHS in app.js) */
 .glyph { display: inline-block; line-height: 1; }
 .glyph--tall { transform: scaleY(1.9); }
+
+/* ============================== SAIL TO JELLING (mini game) ============================== */
+.screen--sail { gap: var(--s1); }
+.screen--sail .topbar { margin-bottom: 0; }
+.topbar__spacer { width: 44px; height: 44px; flex: none; }
+.btn--sail { gap: var(--s1); background: rgba(255, 249, 232, .6); }
+.sail {
+  position: relative;
+  height: min(74vh, 720px);
+  height: min(74dvh, 720px);
+  min-height: 420px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--gold);
+  box-shadow: inset 0 0 0 3px rgba(43, 26, 18, .65), var(--shadow);
+  background: #1b4560;
+}
+.sail__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;           /* dragging steers instead of scrolling */
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: grab;
+}
+.sail__panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(88%, 340px);
+  transform: translate(-50%, -50%);
+  padding: var(--s3) var(--s2);
+  text-align: center;
+  background: var(--parchment-light);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 4px var(--parchment-light), inset 0 0 0 5px rgba(201, 161, 74, .7), 0 12px 30px rgba(0, 0, 0, .45);
+  animation: sailPanelIn .35s ease-out both;
+}
+.sail__panel[hidden] { display: none; }
+/* the result sits high, so the landing at Jelling stays in view below it */
+#sail-result { top: 44px; transform: translateX(-50%); padding: var(--s2); animation-name: sailResultIn; }
+#sail-result .sail__text { margin-bottom: var(--s1); }
+@keyframes sailResultIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translateX(-50%); } }
+.sail__title {
+  font-family: var(--font-head);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--blood);
+  letter-spacing: .06em;
+  margin: .25rem 0 .5rem;
+}
+.sail__text, .sail__how { margin: 0 0 var(--s2); line-height: 1.45; }
+.sail__how { color: var(--ink-soft); font-size: .95rem; }
+.sail__gold {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 0 var(--s1);
+  font-family: var(--font-head);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--clan, var(--gold));
+}
+.sail__gold-label { font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); margin-top: .35rem; }
+.sail__best { font-style: italic; color: var(--ink-soft); margin: 0 0 var(--s2); }
+@keyframes sailPanelIn { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@media (prefers-reduced-motion: reduce) { .sail__panel { animation: none; } }
