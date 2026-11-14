@@ -27,20 +27,20 @@
 const RUNES = [
   {
     id: 1,
-    symbol: "ᚠ",
+    symbol: "ᚲ",
     room: "The Fire Room",
-    hint: "Find the room where the flames never sleep. Look for the rune ᚠ near the hearth.",
-    text: "Welcome, traveller. You stand where the fire burned day and night. In a Viking hall the hearth was the heart of the home: it gave light, warmth and food, and around it people told the stories you are about to hear. The rune ᚠ, fehu, means wealth, and in a cold northern winter, fire was wealth. Your quest has begun. Seek the great tree that holds up the nine worlds.",
+    hint: "Find the room where the flames never sleep. Look for the rune ᚲ near the hearth.",
+    text: "Welcome, traveller. You stand where the fire burned day and night. In a Viking hall the hearth was the heart of the home: it gave light, warmth and food, and around it people told the stories you are about to hear. The rune ᚲ, kenaz, is the torch rune. It stands for fire and for the light that lets you see in the dark. Your quest has begun. Seek the great tree that holds up the nine worlds.",
     audio: "audio/rune1.mp3",
     mapX: 24,
     mapY: 70
   },
   {
     id: 2,
-    symbol: "ᚼ",
+    symbol: "ᚺ",
     room: "The Yggdrasil Room",
     hint: "Seek the great ash tree whose roots and branches hold the nine worlds together.",
-    text: "This is Yggdrasil, the world tree. The Vikings believed its branches held up the sky and its roots reached the land of the dead. Gods, giants and humans all lived somewhere on this one tree. The rune ᚼ, hagall, is the first letter of a great king's name. Remember it well. Now go and find where that king left his mark in stone.",
+    text: "This is Yggdrasil, the world tree. The Vikings believed its branches held up the sky and its roots reached the land of the dead. Gods, giants and humans all lived somewhere on this one tree. The rune ᚺ, hagalaz, is the H rune: the first letter of a great king's name. Remember it well. Now go and find where that king left his mark in stone.",
     audio: "audio/rune2.mp3",
     mapX: 74,
     mapY: 56
@@ -50,7 +50,7 @@ const RUNES = [
     symbol: "ᛒ",
     room: "The Rune Stone Room",
     hint: "Find the stone where a king wrote his own story. Look for the rune ᛒ.",
-    text: "King Harald raised a great stone here at Jelling. On it he wrote that he won all of Denmark and Norway, and made the Danes Christian. People called him Harald Bluetooth. The rune ᛒ, bjarkan, is the first letter of his nickname. You have now found both of his runes: ᚼ for Harald and ᛒ for Bluetooth.",
+    text: "King Harald raised a great stone here at Jelling. On it he wrote that he won all of Denmark and Norway, and made the Danes Christian. People called him Harald Bluetooth. The rune ᛒ, bjarkan, is the first letter of his nickname. You have now found both of his runes: ᚺ for Harald and ᛒ for Bluetooth.",
     audio: "audio/rune3.mp3",
     mapX: 42,
     mapY: 24
@@ -86,7 +86,7 @@ const CROWN = {
 /* The finale after the last rune. "hint" is shown on the map once the quest is complete. */
 const FINISHED = {
   title: "The two runes become one",
-  text: "Put Harald's two runes together, ᚼ and ᛒ, and they make a symbol you see every day. More than a thousand years later, engineers named their wireless technology after Harald Bluetooth, because he united people, just as Bluetooth unites devices. The symbol on your phone is his signature.",
+  text: "In Harald's own time the H rune ᚺ was carved more simply, as ᚼ. Put Harald's two runes together, ᚼ and ᛒ, and they make a symbol you see every day. More than a thousand years later, engineers named their wireless technology after Harald Bluetooth, because he united people, just as Bluetooth unites devices. The symbol on your phone is his signature.",
   hint: "Every rune is found. Harald's secret is yours.",
   audio: "audio/finished.mp3"
 };

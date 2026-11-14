@@ -1698,3 +1698,7 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
   .crown__dust { display: none; }
   .rune-cell__rune { clip-path: none !important; }        /* runes appear fully carved */
 }
+
+/* Rune glyphs that fonts draw half-height (see SHORT_GLYPHS in app.js) */
+.glyph { display: inline-block; line-height: 1; }
+.glyph--tall { transform: scaleY(1.9); }
