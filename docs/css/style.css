@@ -1965,8 +1965,8 @@ html:has(body.is-night) { background-color: var(--jg-night); }
 .btn--sail { gap: var(--s1); background: rgba(255, 249, 232, .6); }
 .sail {
   position: relative;
-  height: min(74vh, 720px);
-  height: min(74dvh, 720px);
+  height: min(68vh, 680px);
+  height: min(68dvh, 680px);
   min-height: 420px;
   border-radius: 14px;
   overflow: hidden;
@@ -2025,5 +2025,12 @@ html:has(body.is-night) { background-color: var(--jg-night); }
 }
 .sail__gold-label { font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); margin-top: .35rem; }
 .sail__best { font-style: italic; color: var(--ink-soft); margin: 0 0 var(--s2); }
+.sail-ctrl { display: flex; flex-direction: column; align-items: center; gap: var(--s1); }
+.btn--ctrl { gap: var(--s1); background: rgba(255, 249, 232, .6); }
+.btn--ctrl.is-on { border-color: var(--moss); color: var(--moss); }
+.btn--ctrl.is-on .btn__icon { animation: nfcPulse 1.8s ease-in-out infinite; }
+.btn--ctrl.is-busy { opacity: .7; }
+.sail-ctrl__note { margin: 0; text-align: center; font-size: .9rem; font-style: italic; color: var(--ink-soft); }
+@media (prefers-reduced-motion: reduce) { .btn--ctrl.is-on .btn__icon { animation: none; } }
 @keyframes sailPanelIn { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, -50%); } }
 @media (prefers-reduced-motion: reduce) { .sail__panel { animation: none; } }

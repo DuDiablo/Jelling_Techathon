@@ -1,8 +1,10 @@
 /* Harald's Quest — "Sail to Jelling"
    A ~30 second longship game on a <canvas>: steer up the fjord, dodge rocks and the
    banks, pick up silver coins and land at Jelling. Hitting something costs 2 coins.
-   Controls: drag a finger (the ship follows it), arrow keys / A-D, or a joystick via
-   Sail.stick(x) with x from -1 (left) to 1 (right). No libraries. */
+   The ship moves on both axes: X = left / right, Y = forward / back on the screen.
+   Controls: drag a finger (the ship follows the drag), arrow keys / WASD + Space,
+   or the RUNE_CONTROLLER joystick via Sail.stick(x, y) and Sail.action().
+   Action = "Row!": a short burst of speed (then a few seconds to rest). No libraries. */
 const Sail = (function () {
   "use strict";
 
@@ -16,7 +18,9 @@ const Sail = (function () {
   let LH = 640, scale = 1, dpr = 1;
   let raf = 0, last = 0, running = false;
   let g = null;              // the current run
-  let pointerX = null, keyDir = 0, stickX = 0;
+  let drag = null;           // { x0, y0, sx, so, x, y } while a finger is down
+  let keyX = 0, keyY = 0, stickX = 0, stickY = 0;
+  const BOOST_S = 1.1, BOOST_REST_S = 3.5;
 
   /* ---------- helpers ---------- */
   function rng(seed) {
@@ -80,6 +84,8 @@ const Sail = (function () {
     }
     return {
       d: 0, x: LW / 2, vx: 0, t: 0,
+      oy: 0, vy: 0,              // ship offset above its resting line (Y axis)
+      boost: 0, boostRest: 0,    // "Row!" burst and its rest time
       phase: "count", countT: 3.2,
       speedMul: 1, invuln: 0, shake: 0,
       coins: 0, hits: 0, gold: 0,
@@ -99,7 +105,12 @@ const Sail = (function () {
     LH = h / scale;
     if (!running) draw();
   }
+  // shipY() = the camera's anchor line; boatY() = where the ship actually is on screen.
   function shipY() { return LH - Math.min(130, LH * 0.2); }
+  function boatY() { return shipY() - (g ? g.oy : 0); }
+  function boatD() { return g.d + g.oy; }          // the ship's position along the fjord
+  function oyMax() { return shipY() - LH * 0.4; }  // how far up the screen it may go
+  function oyMin() { return -(LH - 64 - shipY()); } // and how far down
 
   /* ---------- update ---------- */
   function update(dt) {
@@ -112,23 +123,38 @@ const Sail = (function () {
 
     // speed: picks up along the fjord, slows on a hit, eases to a stop at the beach
     g.speedMul = Math.min(1, g.speedMul + dt * 0.6);
-    let speed = lerp(155, 245, g.d / LENGTH) * g.speedMul;
+    g.boost = Math.max(0, g.boost - dt);
+    g.boostRest = Math.max(0, g.boostRest - dt);
+    let speed = lerp(155, 245, g.d / LENGTH) * g.speedMul * (g.boost > 0 ? 1.55 : 1);
     if (g.phase === "arrive") {
-      const left = SHORE - 46 - g.d;
+      const left = SHORE - 46 - boatD();
       speed = Math.max(0, Math.min(speed, left * 1.6));
       if (left < 2 && !g.endT) { g.endT = g.t; }
     }
     g.d += speed * dt;
 
-    // steering
-    let want;
-    if (g.phase === "arrive") want = (LW / 2 - g.x) * 2;
-    else if (pointerX !== null) want = clamp((pointerX - g.x) * 6, -280, 280);
-    else want = clamp(keyDir || stickX, -1, 1) * 250;
-    g.vx += (want - g.vx) * Math.min(1, dt * 8);
+    // steering on both axes
+    let wantX, wantY;
+    if (g.phase === "arrive") {
+      wantX = (LW / 2 - g.x) * 2;
+      wantY = (0 - g.oy) * 2;
+    } else if (drag) {
+      // relative drag: the ship moves as far as the finger does
+      const tx = drag.sx + (drag.x - drag.x0) * 1.2;
+      const to = drag.so - (drag.y - drag.y0) * 1.2;
+      wantX = clamp((tx - g.x) * 6, -280, 280);
+      wantY = clamp((to - g.oy) * 6, -240, 240);
+    } else {
+      wantX = clamp(keyX || stickX, -1, 1) * 250;
+      wantY = clamp(keyY || stickY, -1, 1) * 210;
+    }
+    g.vx += (wantX - g.vx) * Math.min(1, dt * 8);
+    g.vy += (wantY - g.vy) * Math.min(1, dt * 8);
     g.x += g.vx * dt;
+    g.oy = clamp(g.oy + g.vy * dt, oyMin(), oyMax());
+    if (g.oy === oyMin() || g.oy === oyMax()) g.vy = 0;
 
-    g.trail.push({ x: g.x, d: g.d });
+    g.trail.push({ x: g.x, d: boatD() });
     if (g.trail.length > 28) g.trail.shift();
 
     g.invuln = Math.max(0, g.invuln - dt);
@@ -147,7 +173,7 @@ const Sail = (function () {
   function shipCircles() {
     // front / middle / back of the hull, in world coordinates
     return [{ dy: -20, r: 8 }, { dy: 0, r: 10 }, { dy: 20, r: 8 }].map(function (c) {
-      return { x: g.x, d: g.d - c.dy, r: c.r };
+      return { x: g.x, d: boatD() - c.dy, r: c.r };
     });
   }
 
@@ -159,7 +185,8 @@ const Sail = (function () {
     g.invuln = 1.3;
     g.speedMul = 0.45;
     g.shake = reducedMotion ? 0 : 0.3;
-    pop(text || (lost ? "−" + lost : "Ouch!"), g.x, shipY() - 30, "#ffb4a8");
+    pop(text || (lost ? "−" + lost : "Ouch!"), g.x, boatY() - 30, "#ffb4a8");
+    sound("hit");
     if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
   }
 
@@ -173,7 +200,7 @@ const Sail = (function () {
     });
     // rocks
     g.rocks.forEach(function (k) {
-      if (Math.abs(k.d - g.d) > 60) return;
+      if (Math.abs(k.d - boatD()) > 60) return;
       circles.forEach(function (c) {
         const dx = c.x - k.x, dd = c.d - k.d, rr = c.r + k.r * 0.9;
         if (dx * dx + dd * dd < rr * rr) {
@@ -184,14 +211,26 @@ const Sail = (function () {
     });
     // coins
     g.coinList.forEach(function (k) {
-      if (k.taken || Math.abs(k.d - g.d) > 40) return;
-      const dx = g.x - k.x, dd = g.d - k.d;
+      if (k.taken || Math.abs(k.d - boatD()) > 40) return;
+      const dx = g.x - k.x, dd = boatD() - k.d;
       if (dx * dx + dd * dd < 24 * 24) {
         k.taken = true;
         g.coins++;
-        pop("+1", k.x, shipY() - (k.d - g.d), "#ffe9a8");
+        pop("+1", k.x, sy(k.d), "#ffe9a8");
+        sound("coin");
       }
     });
+  }
+
+  function sound(kind) { if (opts.onSound) { try { opts.onSound(kind); } catch (e) { /* ignore */ } } }
+
+  // "Row!": a short burst of speed, then the crew needs a rest.
+  function rowHard() {
+    if (!g || g.phase !== "sail" || g.boostRest > 0) return false;
+    g.boost = BOOST_S;
+    g.boostRest = BOOST_REST_S;
+    pop("Row!", g.x, boatY() - 46, "#f3e9d2");
+    return true;
   }
 
   function pop(text, x, y, colour) { g.pops.push({ text: text, x: x, y: y, life: 0.9, colour: colour }); }
@@ -208,6 +247,7 @@ const Sail = (function () {
       timeMs: g.startedAt ? performance.now() - g.startedAt : 0
     };
     draw();
+    sound("win");
     if (opts.onEnd) opts.onEnd(result);
   }
 
@@ -445,14 +485,14 @@ const Sail = (function () {
     if (g.invuln > 0 && Math.floor(g.invuln * 10) % 2 === 0) return;  // blink after a hit
     const clan = opts.getClan ? opts.getClan() : null;
     const sail = clan ? clan.colour : "#7a1f1f";
-    const x = g.x, y = shipY();
+    const x = g.x, y = boatY();
     const tilt = clamp(g.vx / 900, -0.25, 0.25);
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(tilt);
 
     // oars, rowing
-    const row = g.phase === "sail" || g.phase === "arrive" ? Math.sin(g.t * 7) * 0.35 : 0;
+    const row = g.phase === "sail" || g.phase === "arrive" ? Math.sin(g.t * (g.boost > 0 ? 15 : 7)) * 0.35 : 0;
     ctx.strokeStyle = "#5a3a1e";
     ctx.lineWidth = 2;
     for (let i = 0; i < 4; i++) {
@@ -556,6 +596,15 @@ const Sail = (function () {
     ctx.fillText(String(g.coins), cx + 28, by + 1);
     ctx.textBaseline = "alphabetic";
 
+    // "Row!" readiness: a small bar under the coins (full = ready)
+    if (g.phase === "sail") {
+      const ready = 1 - g.boostRest / BOOST_REST_S;
+      ctx.fillStyle = "rgba(20, 12, 8, .55)";
+      roundRect(cx, by + 17, 66, 8, 4); ctx.fill();
+      ctx.fillStyle = ready >= 1 ? "#9be38a" : "rgba(243, 233, 210, .55)";
+      roundRect(cx + 2, by + 19, Math.max(4, 62 * ready), 4, 2); ctx.fill();
+    }
+
     if (g.phase === "count") {
       const n = Math.ceil(g.countT - 0.2);
       const text = n > 0 ? String(n) : "Row!";
@@ -567,7 +616,7 @@ const Sail = (function () {
       ctx.fillStyle = "#f3e9d2";
       ctx.fillText(text, LW / 2, LH * 0.42);
       ctx.font = "italic 17px " + '"EB Garamond", Georgia, serif';
-      ctx.fillText(opts.hint || "Drag to steer. Dodge the rocks!", LW / 2, LH * 0.42 + 36);
+      ctx.fillText(opts.hint ? opts.hint() : "Drag to steer. Dodge the rocks!", LW / 2, LH * 0.42 + 36);
     }
   }
   function roundRect(x, y, w, h, r) {
@@ -590,28 +639,43 @@ const Sail = (function () {
   }
 
   /* ---------- input ---------- */
-  function toLogicalX(e) {
+  function toLogical(e) {
     const rect = cv.getBoundingClientRect();
-    return (e.clientX - rect.left) / rect.width * LW;
+    const k = LW / rect.width;
+    return { x: (e.clientX - rect.left) * k, y: (e.clientY - rect.top) * k };
   }
+  const KEYS_X = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1 };
+  const KEYS_Y = { ArrowUp: 1, w: 1, W: 1, ArrowDown: -1, s: -1, S: -1 };
   function bindInput() {
     cv.addEventListener("pointerdown", function (e) {
-      pointerX = toLogicalX(e);
+      if (!g) return;
+      const p = toLogical(e);
+      drag = { x0: p.x, y0: p.y, x: p.x, y: p.y, sx: g.x, so: g.oy, t: performance.now() };
       try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
       e.preventDefault();
     });
-    cv.addEventListener("pointermove", function (e) { if (pointerX !== null) pointerX = toLogicalX(e); });
+    cv.addEventListener("pointermove", function (e) {
+      if (!drag) return;
+      const p = toLogical(e);
+      drag.x = p.x; drag.y = p.y;
+    });
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (t) {
-      cv.addEventListener(t, function () { pointerX = null; });
+      cv.addEventListener(t, function () {
+        // a quick tap without moving = "Row!"
+        if (t === "pointerup" && drag && performance.now() - drag.t < 220 &&
+            Math.abs(drag.x - drag.x0) < 6 && Math.abs(drag.y - drag.y0) < 6) rowHard();
+        drag = null;
+      });
     });
     window.addEventListener("keydown", function (e) {
       if (!running) return;
-      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") { keyDir = -1; e.preventDefault(); }
-      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") { keyDir = 1; e.preventDefault(); }
+      if (e.key in KEYS_X) { keyX = KEYS_X[e.key]; e.preventDefault(); }
+      if (e.key in KEYS_Y) { keyY = KEYS_Y[e.key]; e.preventDefault(); }
+      if (e.key === " " || e.key === "Enter") { rowHard(); e.preventDefault(); }
     });
     window.addEventListener("keyup", function (e) {
-      if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && keyDir < 0) keyDir = 0;
-      if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && keyDir > 0) keyDir = 0;
+      if (e.key in KEYS_X && keyX === KEYS_X[e.key]) keyX = 0;
+      if (e.key in KEYS_Y && keyY === KEYS_Y[e.key]) keyY = 0;
     });
     window.addEventListener("resize", resize);
     document.addEventListener("visibilitychange", function () {
@@ -635,7 +699,7 @@ const Sail = (function () {
     },
     start: function () {
       cancelAnimationFrame(raf);
-      pointerX = null; keyDir = 0;
+      drag = null; keyX = 0; keyY = 0;
       g = newRun();
       resize();
       resume();
@@ -654,12 +718,19 @@ const Sail = (function () {
       cancelAnimationFrame(raf);
       if (g) g.paused = false;
     },
-    // Joystick: x from -1 (full left) to 1 (full right), 0 = centre.
-    // Also takes a direction letter from the rune's joystick: "L", "R", "UL", "DR", "C"…
-    stick: function (v) {
-      if (typeof v === "string") v = /L/.test(v) ? -1 : /R/.test(v) ? 1 : 0;
-      stickX = clamp(Number(v) || 0, -1, 1);
+    // Joystick: x from -1 (left) to 1 (right), y from -1 (down / back) to 1 (up / forward).
+    // Also takes a direction string like "L", "UR", "D", "C".
+    stick: function (x, y) {
+      if (typeof x === "string") {
+        const dir = x.toUpperCase();
+        x = /L/.test(dir) ? -1 : /R/.test(dir) ? 1 : 0;
+        y = /U/.test(dir) ? 1 : /D/.test(dir) ? -1 : 0;
+      }
+      stickX = clamp(Number(x) || 0, -1, 1);
+      stickY = clamp(Number(y) || 0, -1, 1);
     },
+    // The action button: "Row!" while sailing. Returns true if it was used.
+    action: function () { return rowHard(); },
     isRunning: function () { return running; },
     LENGTH: LENGTH
   };
