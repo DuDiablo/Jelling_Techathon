@@ -100,12 +100,11 @@ img, svg { display: block; }
 .vignette {
   box-shadow: inset 0 0 90px 10px rgba(92, 52, 22, .45), inset 0 0 22px rgba(60, 30, 10, .4);
   background: radial-gradient(ellipse at center, transparent 58%, rgba(110, 66, 28, .22) 100%);
-  transition: box-shadow .6s, background .6s;
+  transition: box-shadow .6s, background .6s, opacity .8s;
 }
-body.is-finale .vignette {
-  box-shadow: inset 0 0 140px 40px rgba(43, 20, 8, .75), inset 0 0 30px rgba(30, 14, 6, .6);
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(43, 22, 10, .45) 100%);
-}
+.grain { transition: opacity .8s; }
+/* Finale + crown: the night veil takes over; paper texture fades away with it */
+body.is-night .vignette, body.is-night .grain { opacity: 0; }
 
 .app {
   display: grid;
@@ -407,7 +406,7 @@ body.is-mapbg .vignette, body.is-mapbg .grain { display: none; }
    Phones: fixed to the screen, 846×847 at x −159 on a 390 canvas (= centre + 69px),
    growing to cover taller/wider screens so no plain beige ever shows.
    Tablets/desktops: covers the whole journal page (see 4.6). */
-.app { position: relative; isolation: isolate; }
+.app { position: relative; isolation: isolate; overflow-x: clip; } /* clip wide effects (crown rays) at the page edge */
 body.has-map-bg.is-mapbg .app::before {
   content: "";
   position: fixed;
@@ -903,62 +902,105 @@ body.hide-text .transcript { display: none; }
 
 .screen--story .stack-actions { margin-top: var(--s2); }
 
-/* ---------- 4.4 Finale ---------- */
-body.is-finale {
-  background-color: #b89f73;
-  background-image:
-    radial-gradient(ellipse at 50% 30%, rgba(233, 214, 170, .7), transparent 60%),
-    linear-gradient(180deg, #c7ae80, #a68a5c);
+/* ---------- 4.4 Finale + night stage (theme: Jelling Gold, design/theme-jelling-gold.md) ---------- */
+:root {
+  --jg-night: #140c07;        /* Night Hall */
+  --jg-hearth: #3a2416;       /* Hearth Brown */
+  --jg-gold: #d9ad52;         /* Burnished Gold */
+  --jg-gold-pale: #f6e2a0;    /* Pale Gold */
+  --jg-red: #9e2a1c;          /* Runestone Red */
+  --jg-parchment: #e9dcc0;    /* Parchment */
+  --ease-settle: cubic-bezier(.22, 1, .36, 1);  /* entrances: fast start, long soft landing */
+  --ease-glide: cubic-bezier(.65, 0, .35, 1);   /* moves */
 }
-.screen--finale { align-items: center; text-align: center; gap: var(--s3); padding-top: var(--s4); }
+/* One dark layer that fades in for the finale and stays through the crown
+   (instead of the background jumping from parchment to dark). */
+.night-veil {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(circle at 50% 24%, rgba(217, 173, 82, .26), rgba(122, 82, 30, .14) 28%, transparent 58%),
+    radial-gradient(ellipse at center, var(--jg-hearth) 0%, #1d120b 68%, var(--jg-night) 100%);
+  transition: opacity .8s var(--ease-settle), visibility 0s linear .8s;
+}
+body.is-night .night-veil { opacity: 1; visibility: visible; transition: opacity .8s var(--ease-settle), visibility 0s; }
+html:has(body.is-night) { background-color: var(--jg-night); }
+
+.screen--finale { align-items: center; text-align: center; gap: var(--s3); padding-top: var(--s4); color: var(--jg-parchment); }
 .bindrune {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 170px;
+  height: 170px;
   display: grid;
   place-items: center;
 }
-.bindrune::before {
+.bindrune::before {               /* gold bloom when the two runes meet, then a slow breath */
   content: "";
   position: absolute;
-  inset: 10px;
+  inset: -10px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(230, 199, 122, .65), transparent 70%);
+  background: radial-gradient(circle, rgba(246, 226, 160, .55), rgba(217, 173, 82, .22) 45%, transparent 70%);
   opacity: 0;
-  animation: goldPulse 1.6s ease-out 1.5s both;
+  will-change: opacity, transform;
+  animation: bloomIn 1.8s var(--ease-settle) 1.55s both, breathe 4.5s ease-in-out 3.4s infinite;
+}
+.bindrune::after {                /* thin ring rippling outward at the moment of merging */
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1.5px solid var(--jg-gold);
+  opacity: 0;
+  will-change: opacity, transform;
+  animation: ripple 1.6s var(--ease-settle) 1.6s both;
 }
 .bindrune__glyph {
   grid-area: 1 / 1;
+  position: relative;
   font-family: var(--font-head);
   font-size: 7.5rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--ink);
-  text-shadow: 0 1px 0 rgba(255, 240, 210, .5);
+  color: var(--jg-gold-pale);
+  text-shadow: 0 0 22px rgba(217, 173, 82, .55), 0 3px 0 rgba(0, 0, 0, .45);
+  will-change: opacity, transform;
 }
-.bindrune__glyph--h { animation: slideFromLeft 1.3s var(--ease) .2s both; }
-.bindrune__glyph--b { animation: slideFromRight 1.3s var(--ease) .2s both; }
+.bindrune__glyph--h { animation: glideFromLeft 1.6s var(--ease-settle) .35s both; }
+.bindrune__glyph--b { animation: glideFromRight 1.6s var(--ease-settle) .35s both; }
 .finale__body {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--s2);
   width: 100%;
-  animation: fadeUp .8s var(--ease) 2.2s both;
 }
-.screen--finale .label { color: var(--ink); }
-.finale__title { font-family: var(--font-head); font-size: var(--fs-h2); line-height: 1.2; font-weight: 700; color: var(--blood-deep); }
-.finale__text { text-align: left; }
+/* text arrives line by line after the runes have merged */
+.finale__body > * { animation: riseIn .9s var(--ease-settle) both; animation-delay: 2.2s; }
+.finale__body > :nth-child(2) { animation-delay: 2.32s; }
+.finale__body > :nth-child(3) { animation-delay: 2.44s; }
+.finale__body > :nth-child(4) { animation-delay: 2.56s; }
+.finale__body > :nth-child(5) { animation-delay: 2.68s; }
+.finale__body > :nth-child(6) { animation-delay: 2.8s; }
+.finale__body > .stack-actions { animation-delay: 3.5s; }
+.finale__body > .confirm { animation: riseIn .4s var(--ease-settle) both; }
+.screen--finale .label { color: var(--jg-gold); }
+.finale__title { font-family: var(--font-head); font-size: var(--fs-h2); line-height: 1.2; font-weight: 700; color: var(--jg-gold-pale); text-shadow: 0 2px 0 rgba(0, 0, 0, .5); }
+.finale__text { text-align: left; color: var(--jg-parchment); }
 .finale__logo { width: 72px; height: 72px; object-fit: contain; }
 .stamp {
   position: relative;
   width: 112px;
   height: 112px;
   margin: var(--s1) 0;
-  color: var(--blood);
-  animation: stampIn .6s cubic-bezier(.3, 1.6, .5, 1) 3s both;
+  color: var(--jg-red);
+  transform: rotate(-8deg);
 }
-.stamp svg { width: 100%; height: 100%; filter: drop-shadow(0 3px 4px rgba(43, 26, 18, .4)); }
+.finale__body > .stamp { animation: sealPress .9s var(--ease-settle) 3s both; }
+.stamp svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .55)); }
 .stamp span {
   position: absolute;
   inset: 0;
@@ -970,9 +1012,13 @@ body.is-finale {
   line-height: 1.3;
   letter-spacing: .2em;
   text-transform: uppercase;
-  color: var(--gold-light);
-  transform: rotate(-12deg);
+  color: var(--jg-gold-pale);
+  transform: rotate(-4deg);
 }
+/* buttons on the night background */
+.screen--finale .btn--ghost { color: var(--jg-parchment); border-color: rgba(233, 220, 192, .6); }
+.screen--finale .textbtn { color: var(--jg-gold-pale); }
+.screen--finale .confirm { color: var(--jg-parchment); border-color: rgba(233, 220, 192, .5); background: rgba(0, 0, 0, .2); }
 
 /* ---------- 4.5 Settings ---------- */
 .screen--settings { gap: var(--s2); }
@@ -1095,7 +1141,6 @@ body.is-finale {
       repeating-linear-gradient(92deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 9px),
       linear-gradient(180deg, #3b2717, #21150d);
   }
-  body.is-finale { background-color: #1b110b; background-image: radial-gradient(ellipse at 50% 30%, rgba(110, 70, 36, .45), transparent 65%), linear-gradient(180deg, #2a1a10, #140c07); }
   .vignette { display: none; }
   .grain { opacity: .08; }
 
@@ -1123,12 +1168,10 @@ body.is-finale {
     pointer-events: none;
     box-shadow: inset 0 0 70px 6px rgba(110, 62, 24, .45), inset 0 0 14px rgba(70, 36, 12, .45);
   }
-  body.is-finale .app {
-    background-image:
-      radial-gradient(ellipse at 50% 30%, rgba(233, 214, 170, .7), transparent 60%),
-      linear-gradient(180deg, #c7ae80, #a68a5c);
-  }
-  body.is-finale .app::after { box-shadow: inset 0 0 120px 30px rgba(43, 20, 8, .6), inset 0 0 24px rgba(30, 14, 6, .5); }
+  /* Night veil fills the journal page (not the whole window) */
+  .night-veil { position: absolute; border-radius: inherit; }
+  .app::after { transition: opacity .8s; }
+  body.is-night .app::after { opacity: 0; }
 
   .screen--start { min-height: calc(100dvh - 2 * var(--s4) - var(--s5) - var(--s4)); }
   body.has-map-bg.is-mapbg .app::before { position: absolute; border-radius: inherit; background-size: cover; background-position: center; }
@@ -1197,22 +1240,7 @@ body.is-finale {
 
 /* ---------- 4.7 Crown: congratulations + name in runes ---------- */
 :root { --font-rune: "Noto Sans Runic", "Segoe UI Historic", "Segoe UI Symbol", sans-serif; }
-body.is-crown {
-  background-color: #150d07;
-  background-image:
-    radial-gradient(circle at 50% 22%, rgba(230, 199, 122, .3), rgba(122, 82, 30, .18) 26%, transparent 55%),
-    radial-gradient(ellipse at center, #3a2416 0%, #1d120b 70%, #0f0905 100%);
-}
-html:has(body.is-crown) { background-color: #150d07; }
-body.is-crown .vignette, body.is-crown .grain { display: none; }
-@media (min-width: 600px) {
-  body.is-crown .app {
-    background-color: #1d120b;
-    background-image:
-      radial-gradient(circle at 50% 22%, rgba(230, 199, 122, .3), rgba(122, 82, 30, .18) 26%, transparent 55%),
-      radial-gradient(ellipse at center, #3a2416 0%, #1d120b 70%, #0f0905 100%);
-  }
-}
+/* Background: the night veil from 4.4 (already visible after the finale). */
 .screen--crown {
   align-items: center;
   text-align: center;
@@ -1222,8 +1250,8 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
 }
 .crown__hero {
   position: relative;
-  width: 180px;
-  height: 140px;
+  width: 200px;
+  height: 156px;
   display: grid;
   place-items: center;
 }
@@ -1237,25 +1265,42 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
   background: repeating-conic-gradient(from 0deg, rgba(230, 199, 122, .2) 0deg 4deg, transparent 4deg 18deg);
   -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, .55) 14%, transparent 38%);
   mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, .55) 14%, transparent 38%);
-  animation: raysIn 1s var(--ease) .2s both, spin 30s linear infinite;
+  will-change: opacity, transform;
+  animation: raysIn 1.8s var(--ease-settle) .3s both, spin 70s linear infinite;
+}
+.crown__hero::before {            /* soft halo behind the crown that breathes (opacity only = smooth) */
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 220px; height: 220px;
+  margin: -110px 0 0 -110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(246, 226, 160, .5), rgba(217, 173, 82, .18) 45%, transparent 70%);
+  opacity: 0;
+  will-change: opacity, transform;
+  animation: bloomIn 1.6s var(--ease-settle) .9s both, breathe 4.5s ease-in-out 2.5s infinite;
 }
 .crown__dust { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
 .crown__dust i {
   position: absolute; left: 0; top: 0;
   width: var(--sz, 5px); height: var(--sz, 5px);
   border-radius: 50%;
-  background: radial-gradient(circle, #fff6d6, var(--gold) 70%);
-  box-shadow: 0 0 8px rgba(230, 199, 122, .95);
+  background: radial-gradient(circle, #fff6d6, var(--jg-gold) 70%);
+  box-shadow: 0 0 8px rgba(246, 226, 160, .9);
   opacity: 0;
-  animation: dust 1.3s ease-out var(--d, 0ms) both;
+  will-change: opacity, transform;
+  animation: sparkDrift 1.9s var(--ease-settle) var(--d, 0ms) both;
 }
 .crown__icon {
-  width: 150px;
-  height: 115px;
-  filter: drop-shadow(0 0 18px rgba(230, 199, 122, .6)) drop-shadow(0 6px 6px rgba(0, 0, 0, .5));
-  animation: crownDrop 1.1s cubic-bezier(.25, 1.5, .45, 1) .15s both, crownGlow 2.6s ease-in-out 1.4s infinite;
+  position: relative;
+  width: 184px;
+  height: 138px;
+  filter: drop-shadow(0 0 16px rgba(217, 173, 82, .45)) drop-shadow(0 8px 7px rgba(0, 0, 0, .55));
+  will-change: opacity, transform;
+  /* descends and settles (no bounce), then floats gently */
+  animation: crownDescend 1.5s var(--ease-settle) .35s both, crownFloat 5s ease-in-out 2s infinite;
 }
-.crown__kicker { color: var(--gold-light); opacity: .85; animation: fadeUp .6s var(--ease) .9s both; }
+.crown__kicker { color: var(--jg-gold); animation: riseIn .9s var(--ease-settle) 1.15s both; }
 .crown__title {
   font-family: var(--font-title);
   font-weight: 700;
@@ -1263,17 +1308,17 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
   line-height: 1.1;
   max-width: 100%;
   overflow-wrap: anywhere;
-  color: var(--gold-light);
-  text-shadow: 0 2px 0 rgba(0, 0, 0, .6), 0 0 24px rgba(201, 161, 74, .55);
-  animation: fadeUp .7s var(--ease) 1.05s both;
+  color: var(--jg-gold-pale);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .6), 0 0 24px rgba(217, 173, 82, .5);
+  animation: riseIn 1s var(--ease-settle) 1.3s both;
 }
 .crown__subtitle {
   font-family: var(--font-head);
   font-weight: 700;
   font-size: 1.15rem;
   letter-spacing: .08em;
-  color: var(--parchment);
-  animation: fadeUp .7s var(--ease) 1.25s both;
+  color: var(--jg-parchment);
+  animation: riseIn 1s var(--ease-settle) 1.48s both;
 }
 .crown__card {
   width: 100%;
@@ -1285,8 +1330,8 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
     radial-gradient(ellipse at 30% 0%, rgba(255, 248, 228, .85), transparent 60%),
     linear-gradient(180deg, #f3e9d2, var(--parchment));
   border-radius: var(--radius);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, .55), inset 0 0 0 5px rgba(243, 233, 210, .6), inset 0 0 0 6px rgba(201, 161, 74, .7);
-  animation: fadeUp .7s var(--ease) 1.6s both;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .55), inset 0 0 0 5px rgba(243, 233, 210, .6), inset 0 0 0 6px rgba(217, 173, 82, .7);
+  animation: riseIn 1.1s var(--ease-settle) 1.9s both;
 }
 .crown__form { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
 .crown__ask { font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; color: var(--blood); }
@@ -1310,37 +1355,56 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
 .crown__input:focus { outline: 2px solid var(--gold); outline-offset: 2px; }
 .crown__error { min-height: 1.2em; margin-top: calc(-1 * var(--s1)); font-style: italic; color: var(--blood); font-size: .95rem; }
 .crown__result { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
-.crown__hail { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--blood); animation: fadeUp .6s var(--ease) both; animation-delay: var(--hail-delay, 1s); }
+.crown__result > .label { animation: riseIn .6s var(--ease-settle) both; }
+.crown__hail { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--blood); animation: riseIn .9s var(--ease-settle) both; animation-delay: var(--hail-delay, 1s); }
 .crown__note { font-style: italic; font-size: .95rem; color: var(--ink-soft); }
 
-/* The carved rune stone (grey granite, runes painted red like the Jelling stones once were) */
+/* The rune stone: a granite boulder like the Jelling stones (see #granite, #stone-clip,
+   #carve-stone in index.html). Layers: rock texture → rounded shading → carved border band → runes. */
 .runestone {
   position: relative;
   width: 100%;
+  min-height: 170px;
+  /* shadow follows the boulder outline, as if it stands on the ground */
+  filter: drop-shadow(0 12px 9px rgba(30, 18, 8, .45)) drop-shadow(0 2px 2px rgba(30, 18, 8, .35));
+  animation: stoneIn .8s var(--ease-settle) both;
+}
+.runestone__rock, .runestone__shade {
+  position: absolute;
+  inset: 0;
+  clip-path: url(#stone-clip);
+  pointer-events: none;
+}
+.runestone__rock {
+  background: #8d8880;            /* base granite grey; texture comes from the #granite filter */
+  filter: url(#granite);
+}
+.runestone__shade {               /* rounded volume: lit top-left, darker edges and base */
+  background:
+    radial-gradient(ellipse 65% 55% at 36% 26%, rgba(255, 250, 240, .26), transparent 62%),
+    radial-gradient(ellipse 80% 75% at 50% 52%, transparent 55%, rgba(18, 14, 10, .55) 100%),
+    linear-gradient(180deg, transparent 72%, rgba(20, 14, 8, .3) 100%);
+}
+.runestone__band {                /* carved border band that the runes sit inside */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.runestone__band path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.runestone__band-cut { stroke: rgba(22, 16, 11, .55); stroke-width: 3.2; }
+.runestone__band-lip { stroke: rgba(255, 246, 232, .16); stroke-width: 1.2; transform: translateY(1.2px); }
+.runestone__runes {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-content: center;
   gap: 6px 4px;
-  padding: var(--s3) var(--s2) var(--s2);
-  border-radius: 46% 46% 10px 10px / 30% 30% 10px 10px;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, .18), transparent 55%),
-    radial-gradient(circle at 70% 80%, rgba(0, 0, 0, .25), transparent 60%),
-    linear-gradient(160deg, #9c9890, #77736b 55%, #5e5a53);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .08), inset 0 -10px 24px rgba(0, 0, 0, .35), 0 8px 18px rgba(43, 26, 18, .35);
-}
-.runestone::before {          /* speckled granite texture */
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: .35;
-  background-image:
-    radial-gradient(rgba(0, 0, 0, .5) 1px, transparent 1.5px),
-    radial-gradient(rgba(255, 255, 255, .4) 1px, transparent 1.5px);
-  background-size: 9px 11px, 13px 7px;
-  background-position: 0 0, 4px 3px;
+  min-height: 170px;
+  padding: 44px 13% 24px;
 }
 .rune-cell {
   position: relative;
@@ -1351,26 +1415,27 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
 }
 .rune-cell__rune {
   font-family: var(--font-rune);
-  font-size: 2.6rem;
+  font-size: 2.7rem;
   line-height: 1.15;
-  color: #9e2a1c;
-  /* carved: dark cut on top, light edge below */
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .28);
-  animation: carve .45s steps(6, end) both, carveGlow .9s ease-out both;
+  color: var(--jg-red);
+  -webkit-text-stroke: .9px currentColor;   /* chunkier strokes, like a chisel cut */
+  filter: url(#carve-stone);                /* rough edges, groove depth, chipped paint */
+  will-change: clip-path, opacity;
+  animation: carve .75s var(--ease-settle) both, carveGlow 1.5s var(--ease-settle) both;
   animation-delay: var(--d, 0ms), var(--d, 0ms);
 }
-.rune-cell__latin {
+.rune-cell__latin {               /* modern letters, lightly scratched into the stone */
   font-family: var(--font-head);
   font-weight: 700;
-  font-size: .72rem;
-  letter-spacing: .08em;
-  color: rgba(255, 248, 230, .9);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, .6);
-  animation: fade .4s ease-out both;
-  animation-delay: calc(var(--d, 0ms) + 250ms);
+  font-size: .7rem;
+  letter-spacing: .1em;
+  color: #f6efe2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .85), 0 0 6px rgba(0, 0, 0, .45);
+  animation: riseIn .6s var(--ease-settle) both;
+  animation-delay: calc(var(--d, 0ms) + 320ms);
 }
 .rune-cell--gap { min-width: 14px; }
-.rune-cell--gap .rune-cell__rune { color: rgba(255, 248, 230, .55); font-size: 1.6rem; line-height: 1.8; }
+.rune-cell--gap .rune-cell__rune { color: rgba(40, 28, 20, .7); font-size: 1.6rem; line-height: 1.8; -webkit-text-stroke: 0; }
 
 /* ---------- Rune chooser sheet ---------- */
 .sheet {
@@ -1629,8 +1694,43 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
 @keyframes carve { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes carveGlow {
   0% { color: #ffe9b0; text-shadow: 0 0 14px rgba(255, 220, 140, .95); }
-  100% { color: #9e2a1c; text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .28); }
+  100% { color: #9e2a1c; text-shadow: 0 0 0 rgba(255, 220, 140, 0); }
 }
+/* --- Jelling Gold motion (opacity + transform only, settle easing, no overshoot) --- */
+@keyframes riseIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes glideFromLeft {
+  from { opacity: 0; transform: translateX(-90px) scale(.92); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes glideFromRight {
+  from { opacity: 0; transform: translateX(90px) scale(.92); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes bloomIn {
+  0% { opacity: 0; transform: scale(.6); }
+  45% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: .6; transform: scale(1); }
+}
+@keyframes breathe { 0%, 100% { opacity: .6; } 50% { opacity: .95; } }
+@keyframes ripple {
+  0% { opacity: .85; transform: scale(.7); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+@keyframes sealPress {
+  0% { opacity: 0; transform: rotate(-8deg) scale(1.35); }
+  100% { opacity: 1; transform: rotate(-8deg) scale(1); }
+}
+@keyframes crownDescend {
+  0% { opacity: 0; transform: translateY(-56px) scale(.9); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes crownFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes sparkDrift {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 24px)) scale(.6); }
+}
+@keyframes stoneIn { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes screenIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -1695,6 +1795,9 @@ body.is-crown .vignette, body.is-crown .grain { display: none; }
   .unlockfx__rays, .unlockfx__ring { animation: none !important; } /* static, no spin */
   .unlockfx__dust { display: none; }                      /* no sparks */
   .crown__rays, .crown__icon { animation: none !important; } /* static crown + rays */
+  .crown__hero::before, .bindrune::before { animation: none !important; opacity: .6; } /* static glow */
+  .bindrune::after { display: none; }                     /* no ripple */
+  .night-veil { transition: none !important; }
   .crown__dust { display: none; }
   .rune-cell__rune { clip-path: none !important; }        /* runes appear fully carved */
 }

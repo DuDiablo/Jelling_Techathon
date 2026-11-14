@@ -67,8 +67,9 @@
     state.previous = state.screen;
     state.screen = name;
     document.body.classList.toggle("is-finale", name === "finale");
-    document.body.classList.toggle("is-mapbg", name !== "finale" && name !== "crown");
     document.body.classList.toggle("is-crown", name === "crown");
+    // Finale + crown: the night veil fades in over the map (theme "Jelling Gold").
+    document.body.classList.toggle("is-night", name === "finale" || name === "crown");
 
     to.hidden = false;
     to.classList.add("is-entering");
@@ -687,7 +688,7 @@
     $("#crown-note").textContent = CROWN.note;
     resetCrownForm();
     showScreen("crown");
-    burstDust($("#crown-dust"), 44, 90, 170, 1500);
+    burstDust($("#crown-dust"), 44, 90, 170, 2400); // sparks drift ~1.9 s + up to 0.16 s delay
     const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
     if (navigator.vibrate && tapped) { try { navigator.vibrate([60, 80, 120]); } catch (e) { /* ignore */ } }
   }
@@ -709,7 +710,7 @@
     const clean = String(name).trim().replace(/\s+/g, " ");
     const stone = $("#runestone");
     stone.replaceChildren();
-    const STEP = reducedMotion ? 0 : 220;
+    const STEP = reducedMotion ? 0 : 260;
     let n = 0;
     runes.forEach(function (r) {
       const cell = document.createElement("span");
@@ -952,7 +953,7 @@
       animateMap();
       setStatus("You found rune " + nfcRune.symbol + ". Tap the button to hear it.");
     }
-    document.body.classList.toggle("is-mapbg", state.screen !== "finale" && state.screen !== "crown");
+    document.body.classList.add("is-mapbg"); // map background on every screen (the night veil covers it for the finale)
   }
 
   init();
