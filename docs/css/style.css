@@ -1195,6 +1195,183 @@ body.is-finale {
   .bindrune__glyph { font-size: 5.5rem; }
 }
 
+/* ---------- 4.7 Crown: congratulations + name in runes ---------- */
+:root { --font-rune: "Noto Sans Runic", "Segoe UI Historic", "Segoe UI Symbol", sans-serif; }
+body.is-crown {
+  background-color: #150d07;
+  background-image:
+    radial-gradient(circle at 50% 22%, rgba(230, 199, 122, .3), rgba(122, 82, 30, .18) 26%, transparent 55%),
+    radial-gradient(ellipse at center, #3a2416 0%, #1d120b 70%, #0f0905 100%);
+}
+html:has(body.is-crown) { background-color: #150d07; }
+body.is-crown .vignette, body.is-crown .grain { display: none; }
+@media (min-width: 600px) {
+  body.is-crown .app {
+    background-color: #1d120b;
+    background-image:
+      radial-gradient(circle at 50% 22%, rgba(230, 199, 122, .3), rgba(122, 82, 30, .18) 26%, transparent 55%),
+      radial-gradient(ellipse at center, #3a2416 0%, #1d120b 70%, #0f0905 100%);
+  }
+}
+.screen--crown {
+  align-items: center;
+  text-align: center;
+  gap: var(--s1);
+  padding-top: var(--s2);
+  color: var(--parchment);
+}
+.crown__hero {
+  position: relative;
+  width: 180px;
+  height: 140px;
+  display: grid;
+  place-items: center;
+}
+.crown__rays {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 150vmax; height: 150vmax;
+  margin: -75vmax 0 0 -75vmax;
+  z-index: -1;
+  pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgba(230, 199, 122, .2) 0deg 4deg, transparent 4deg 18deg);
+  -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, .55) 14%, transparent 38%);
+  mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, .55) 14%, transparent 38%);
+  animation: raysIn 1s var(--ease) .2s both, spin 30s linear infinite;
+}
+.crown__dust { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.crown__dust i {
+  position: absolute; left: 0; top: 0;
+  width: var(--sz, 5px); height: var(--sz, 5px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff6d6, var(--gold) 70%);
+  box-shadow: 0 0 8px rgba(230, 199, 122, .95);
+  opacity: 0;
+  animation: dust 1.3s ease-out var(--d, 0ms) both;
+}
+.crown__icon {
+  width: 150px;
+  height: 115px;
+  filter: drop-shadow(0 0 18px rgba(230, 199, 122, .6)) drop-shadow(0 6px 6px rgba(0, 0, 0, .5));
+  animation: crownDrop 1.1s cubic-bezier(.25, 1.5, .45, 1) .15s both, crownGlow 2.6s ease-in-out 1.4s infinite;
+}
+.crown__kicker { color: var(--gold-light); opacity: .85; animation: fadeUp .6s var(--ease) .9s both; }
+.crown__title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: clamp(1.45rem, 7.4vw, 2.6rem); /* "Congratulations!" fits on one line from 320px */
+  line-height: 1.1;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--gold-light);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .6), 0 0 24px rgba(201, 161, 74, .55);
+  animation: fadeUp .7s var(--ease) 1.05s both;
+}
+.crown__subtitle {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: .08em;
+  color: var(--parchment);
+  animation: fadeUp .7s var(--ease) 1.25s both;
+}
+.crown__card {
+  width: 100%;
+  max-width: 420px;
+  margin-top: var(--s2);
+  padding: var(--s3) var(--s3) var(--s3);
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 30% 0%, rgba(255, 248, 228, .85), transparent 60%),
+    linear-gradient(180deg, #f3e9d2, var(--parchment));
+  border-radius: var(--radius);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .55), inset 0 0 0 5px rgba(243, 233, 210, .6), inset 0 0 0 6px rgba(201, 161, 74, .7);
+  animation: fadeUp .7s var(--ease) 1.6s both;
+}
+.crown__form { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
+.crown__ask { font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; color: var(--blood); }
+.crown__input {
+  width: 100%;
+  max-width: 320px;
+  min-height: 52px;
+  padding: 0 var(--s2);
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-align: center;
+  color: var(--ink);
+  background: rgba(255, 252, 242, .85);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius);
+  box-shadow: inset 0 2px 5px rgba(43, 26, 18, .2);
+}
+.crown__input::placeholder { color: rgba(90, 70, 50, .55); font-weight: 400; }
+.crown__input:focus { outline: 2px solid var(--gold); outline-offset: 2px; }
+.crown__error { min-height: 1.2em; margin-top: calc(-1 * var(--s1)); font-style: italic; color: var(--blood); font-size: .95rem; }
+.crown__result { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
+.crown__hail { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; color: var(--blood); animation: fadeUp .6s var(--ease) both; animation-delay: var(--hail-delay, 1s); }
+.crown__note { font-style: italic; font-size: .95rem; color: var(--ink-soft); }
+
+/* The carved rune stone (grey granite, runes painted red like the Jelling stones once were) */
+.runestone {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 4px;
+  padding: var(--s3) var(--s2) var(--s2);
+  border-radius: 46% 46% 10px 10px / 30% 30% 10px 10px;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, .18), transparent 55%),
+    radial-gradient(circle at 70% 80%, rgba(0, 0, 0, .25), transparent 60%),
+    linear-gradient(160deg, #9c9890, #77736b 55%, #5e5a53);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .08), inset 0 -10px 24px rgba(0, 0, 0, .35), 0 8px 18px rgba(43, 26, 18, .35);
+}
+.runestone::before {          /* speckled granite texture */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: .35;
+  background-image:
+    radial-gradient(rgba(0, 0, 0, .5) 1px, transparent 1.5px),
+    radial-gradient(rgba(255, 255, 255, .4) 1px, transparent 1.5px);
+  background-size: 9px 11px, 13px 7px;
+  background-position: 0 0, 4px 3px;
+}
+.rune-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 34px;
+}
+.rune-cell__rune {
+  font-family: var(--font-rune);
+  font-size: 2.6rem;
+  line-height: 1.15;
+  color: #9e2a1c;
+  /* carved: dark cut on top, light edge below */
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .28);
+  animation: carve .45s steps(6, end) both, carveGlow .9s ease-out both;
+  animation-delay: var(--d, 0ms), var(--d, 0ms);
+}
+.rune-cell__latin {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: .72rem;
+  letter-spacing: .08em;
+  color: rgba(255, 248, 230, .9);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .6);
+  animation: fade .4s ease-out both;
+  animation-delay: calc(var(--d, 0ms) + 250ms);
+}
+.rune-cell--gap { min-width: 14px; }
+.rune-cell--gap .rune-cell__rune { color: rgba(255, 248, 230, .55); font-size: 1.6rem; line-height: 1.8; }
+
 /* ---------- Rune chooser sheet ---------- */
 .sheet {
   position: fixed;
@@ -1439,6 +1616,21 @@ body.is-finale {
   0%, 100% { text-shadow: 0 0 24px rgba(230, 199, 122, .9), 0 0 60px rgba(201, 161, 74, .6), 0 4px 0 rgba(0, 0, 0, .5); }
   50% { text-shadow: 0 0 36px rgba(255, 230, 160, 1), 0 0 90px rgba(201, 161, 74, .85), 0 4px 0 rgba(0, 0, 0, .5); }
 }
+@keyframes crownDrop {
+  0% { opacity: 0; transform: translateY(-140px) rotate(-14deg) scale(.7); }
+  60% { opacity: 1; transform: translateY(8px) rotate(4deg) scale(1.06); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes crownGlow {
+  0%, 100% { filter: drop-shadow(0 0 18px rgba(230, 199, 122, .6)) drop-shadow(0 6px 6px rgba(0, 0, 0, .5)); }
+  50% { filter: drop-shadow(0 0 30px rgba(255, 228, 150, .95)) drop-shadow(0 6px 6px rgba(0, 0, 0, .5)); }
+}
+/* chiselled in from the top, a few strokes at a time */
+@keyframes carve { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes carveGlow {
+  0% { color: #ffe9b0; text-shadow: 0 0 14px rgba(255, 220, 140, .95); }
+  100% { color: #9e2a1c; text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .28); }
+}
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes screenIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -1502,4 +1694,7 @@ body.is-finale {
   #route-reveal { stroke-dashoffset: 0 !important; }      /* path fully drawn */
   .unlockfx__rays, .unlockfx__ring { animation: none !important; } /* static, no spin */
   .unlockfx__dust { display: none; }                      /* no sparks */
+  .crown__rays, .crown__icon { animation: none !important; } /* static crown + rays */
+  .crown__dust { display: none; }
+  .rune-cell__rune { clip-path: none !important; }        /* runes appear fully carved */
 }

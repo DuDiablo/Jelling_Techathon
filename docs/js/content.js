@@ -71,6 +71,18 @@ const ALREADY = {
   audio: "audio/already.mp3"
 };
 
+/* The crown screen after the finale: congratulations + the visitor's name in runes.
+   "{name}" in hail is replaced by the name they type. */
+const CROWN = {
+  kicker: "Quest complete",
+  title: "Congratulations!",
+  subtitle: "Hail, Ruler of the Runes",
+  ask: "What is your name, traveller?",
+  button: "Carve my name",
+  hail: "Welcome, {name}, Ruler of the Runes!",
+  note: "Your name is written in the Younger Futhark, the same runes King Harald carved on the Jelling stones."
+};
+
 /* The finale after the last rune. "hint" is shown on the map once the quest is complete. */
 const FINISHED = {
   title: "The two runes become one",

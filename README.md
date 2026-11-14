@@ -113,6 +113,8 @@ design/  src/          placeholders
 
 GitHub Pages is on: **Settings → Pages → `main` → `/docs`**. Every merge to `main` that changes `docs/` goes live in about a minute (reload once on the phone to skip the cache).
 
+**After changing CSS or JS:** bump the `?v=…` number on the `<link>` / `<script>` tags in `docs/index.html` (e.g. `?v=20261114-2`). Otherwise browsers and phones may keep an old cached file, and a mix of old and new files can stop the app from starting. If an app on your laptop acts strange after an update, press **Ctrl + Shift + R**.
+
 **NFC stickers** (write with the NFC Tools app):
 `https://dudiablo.github.io/Jelling_Techathon/?rune=1` (and `=2`, `=3`)
 

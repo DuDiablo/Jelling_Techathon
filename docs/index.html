@@ -8,8 +8,9 @@
   <title>Harald's Quest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Noto+Sans+Runic&display=swap" rel="stylesheet">
+  <!-- VERSION: bump ?v=… on the CSS + JS links below after changing them, so phones and browsers load the new files instead of an old cached copy. -->
+  <link rel="stylesheet" href="css/style.css?v=20261114-1">
 </head>
 <body>
 
@@ -269,6 +270,10 @@
             <button class="btn btn--tiny" type="button" data-sim="2">Simulate rune 2</button>
             <button class="btn btn--tiny" type="button" data-sim="3">Simulate rune 3</button>
           </div>
+          <div class="debug__row">
+            <button class="btn btn--tiny" type="button" data-action="debug-finale">Skip to finale</button>
+            <button class="btn btn--tiny" type="button" data-action="debug-crown">Skip to crown</button>
+          </div>
         </div>
       </div>
       </div>
@@ -342,14 +347,65 @@
         <img class="finale__logo" id="bt-logo" src="assets/bluetooth-logo.svg" alt="Bluetooth logo" width="72" height="72" hidden>
         <div class="stamp" aria-hidden="true"><svg><use href="#seal"/></svg><span>Quest<br>complete</span></div>
         <div class="stack-actions">
-          <button class="btn btn--primary" type="button" data-action="home">Back to start</button>
-          <button class="btn btn--ghost" type="button" data-action="ask-reset">Play again</button>
+          <button class="btn btn--primary" type="button" data-action="crown">Claim your title</button>
+          <button class="btn btn--ghost" type="button" data-action="home">Back to start</button>
+          <button class="textbtn" type="button" data-action="ask-reset">Play again</button>
         </div>
         <div class="confirm" data-confirm hidden>
           <p>Start over? All collected runes will be forgotten.</p>
           <div class="confirm__row">
             <button class="btn btn--tiny btn--danger" type="button" data-action="do-reset">Yes, start over</button>
             <button class="btn btn--tiny" type="button" data-action="cancel-reset">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 4b. CROWN: congratulations + your name in runes ===================== -->
+    <section class="screen screen--crown" id="screen-crown" aria-labelledby="crown-title" hidden>
+      <div class="crown__hero" aria-hidden="true">
+        <div class="crown__rays"></div>
+        <div class="crown__dust" id="crown-dust"></div>
+        <svg class="crown__icon" viewBox="0 0 120 92">
+          <defs>
+            <linearGradient id="crown-gold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#fbeab4"/>
+              <stop offset=".45" stop-color="#d9ad52"/>
+              <stop offset="1" stop-color="#8a6420"/>
+            </linearGradient>
+          </defs>
+          <path d="M12 72 L6 24 L34 48 L60 8 L86 48 L114 24 L108 72 Z" fill="url(#crown-gold)" stroke="#4a300c" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M20 66 L16 38 L36 56 L60 22 L84 56 L104 38 L100 66" fill="none" stroke="#fff3cf" stroke-width="1.2" opacity=".55" stroke-linejoin="round"/>
+          <rect x="10" y="70" width="100" height="16" rx="2" fill="url(#crown-gold)" stroke="#4a300c" stroke-width="2.4"/>
+          <g fill="#7A1F1F" stroke="#4a300c" stroke-width="1.4">
+            <circle cx="6" cy="24" r="5.5"/><circle cx="60" cy="8" r="6.5"/><circle cx="114" cy="24" r="5.5"/>
+            <circle cx="34" cy="78" r="4"/><circle cx="86" cy="78" r="4"/>
+          </g>
+          <path d="M57 74 V84 M57 76 L54 73.5 M57 79 L54 76.5 M63 74 V84 M63 74 L66 77 L63 79 L66 81.5 L63 84" fill="none" stroke="#4a300c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <p class="label crown__kicker" id="crown-kicker">Quest complete</p>
+      <h2 class="crown__title" id="crown-title">Congratulations!</h2>
+      <p class="crown__subtitle" id="crown-subtitle">Hail, Ruler of the Runes</p>
+
+      <div class="crown__card">
+        <form class="crown__form" id="crown-form" novalidate>
+          <label class="crown__ask" for="crown-name" id="crown-ask">What is your name, traveller?</label>
+          <input class="crown__input" id="crown-name" name="name" type="text" maxlength="20"
+                 autocomplete="given-name" autocapitalize="words" spellcheck="false" enterkeyhint="done"
+                 placeholder="Your name">
+          <p class="crown__error" id="crown-error" aria-live="polite"></p>
+          <button class="btn btn--primary" type="submit">Carve my name</button>
+        </form>
+
+        <div class="crown__result" id="crown-result" hidden>
+          <p class="label">Your name in runes</p>
+          <div class="runestone" id="runestone" role="img"></div>
+          <p class="crown__hail" id="crown-hail" aria-live="polite"></p>
+          <p class="crown__note" id="crown-note"></p>
+          <div class="stack-actions">
+            <button class="btn btn--ghost" type="button" data-action="crown-again">Carve another name</button>
+            <button class="btn btn--primary" type="button" data-action="home">Back to start</button>
           </div>
         </div>
       </div>
@@ -440,9 +496,9 @@
     </div>
   </div>
 
-  <script src="js/content.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/ble.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/content.js?v=20261114-1"></script>
+  <script src="js/audio.js?v=20261114-1"></script>
+  <script src="js/ble.js?v=20261114-1"></script>
+  <script src="js/app.js?v=20261114-1"></script>
 </body>
 </html>
