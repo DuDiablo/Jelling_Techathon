@@ -228,7 +228,9 @@
     try { await Controller.connect(); } catch (e) { /* the state handler shows what happened */ }
   }
   Controller.on("state", renderController);
-  Controller.on("input", function (v) { Sail.stick(v.x, v.y); });
+  // The joystick is mounted turned, so its axes are swapped for the game:
+  // the controller's y steers left / right and its x moves forward / back.
+  Controller.on("input", function (v) { Sail.stick(v.y, v.x); });
   // The action button only shouts "Row!" while sailing. A voyage starts only from the
   // on-screen Start button, so there's time to connect the joystick first.
   Controller.on("press", function () {
