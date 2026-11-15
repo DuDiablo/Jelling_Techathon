@@ -391,7 +391,7 @@ const Keepsakes = (function () {
     }
     ctx.fillStyle = C.ink;
     ctx.font = "40px " + F.body;
-    ctx.fillText((many ? "found" : "found") + " the three runes ᚲ ᚺ ᛒ in the halls of King Harald Bluetooth", W / 2, y);
+    ctx.fillText((many ? "found" : "found") + " the three runes ᚠ ᛒ ᚼ in the halls of King Harald Bluetooth", W / 2, y);
     ctx.fillText((many ? "and are" : "and is") + " hailed by all as " + (many ? "Rulers of the Runes." : "Ruler of the Runes."), W / 2, y + 56);
     // gold from the "Sail to Jelling" voyage
     if (data.gold > 0) {

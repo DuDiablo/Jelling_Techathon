@@ -30,12 +30,12 @@
 const RUNES = [
   {
     id: 1,
-    symbol: "ᚲ",
+    symbol: "ᚠ",
     room: "The Fire Room",
     hint: "Where hearth-flames roared and the old hall slept,\n" +
           "a rune of fire in shadow is kept.\n" +
           "The dark holds it close; no wandering eye\n" +
-          "will find where the torch-rune's embers lie.\n" +
+          "will find where the fire-rune's embers lie.\n" +
           "So kindle a light, O seeker bold,\n" +
           "and sweep the dark like the torch-bearers of old.\n" +
           "On stone, on timber, on wall and floor —\n" +
@@ -47,7 +47,7 @@ const RUNES = [
   },
   {
     id: 2,
-    symbol: "ᚺ",
+    symbol: "ᛒ",
     room: "The Yggdrasil Room",
     hint: "In the hall of the gods where the great roots grow,\n" +
           "pale and white as the winter snow,\n" +
@@ -56,7 +56,7 @@ const RUNES = [
           "Look high, look low, look left and right,\n" +
           "search every corner, in every light.\n" +
           "Among the roots, if your eyes are keen,\n" +
-          "the hail-rune ᚺ waits there, unseen.",
+          "the birch-rune ᛒ waits there, unseen.",
     text: "Right now you are standing in the mythology room. In this room you will see some huge white roots. On them there will be pictures, you will hear stories, and the room will shift colours. So please sit down and enjoy the videos.",
     audio: "audio/rune2.mp3",
     mapX: 74,
@@ -64,7 +64,7 @@ const RUNES = [
   },
   {
     id: 3,
-    symbol: "ᛒ",
+    symbol: "ᚼ",
     room: "The Rune Stone Room",
     hint: "Where the kings' great stones stand proud and tall,\n" +
           "their old words carved for the eyes of all,\n" +
@@ -72,8 +72,8 @@ const RUNES = [
           "one rune stands between you and your goal.\n" +
           "Walk slowly round and read stone by stone;\n" +
           "the last rune waits for you alone.\n" +
-          "Seek out the birch-rune, ᛒ by name,\n" +
-          "then Harald's crown is yours to claim.",
+          "Seek Harald's own rune, ᚼ, H for his name,\n" +
+          "and the crown of the runes is yours to claim.",
     text: "You have just finished visiting the museum, and you have probably learned a lot about Harald, Gorm the Old and Queen Thyra. Gorm and Harald are the first in the royal line of Denmark's monarchy. Next, go outside to the monument area and see the two huge rune stones in front of the church. These are the stones that Gorm and Harald placed right here in the Viking Age.",
     audio: "audio/rune3.mp3",
     mapX: 42,
@@ -158,7 +158,7 @@ const CLAN_SCREEN = {
 /* The finale after the last rune. "hint" is shown on the map once the quest is complete. */
 const FINISHED = {
   title: "The two runes become one",
-  text: "In Harald's own time the H rune ᚺ was carved more simply, as ᚼ. Put Harald's two runes together, ᚼ and ᛒ, and they make a symbol you see every day. More than a thousand years later, engineers named their wireless technology after Harald Bluetooth, because he united people, just as Bluetooth unites devices. The symbol on your phone is his signature.",
+  text: "Two of the runes you found are Harald's own: ᚼ for Harald and ᛒ for Bluetooth. Put them together, ᚼ and ᛒ, and they make a symbol you see every day. More than a thousand years later, engineers named their wireless technology after Harald Bluetooth, because he united people, just as Bluetooth unites devices. The symbol on your phone is his signature.",
   hint: "Every rune is found. Harald's secret is yours.",
   audio: "audio/finished.mp3"
 };
