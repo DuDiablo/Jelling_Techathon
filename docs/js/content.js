@@ -49,7 +49,14 @@ const RUNES = [
     id: 2,
     symbol: "ᚺ",
     room: "The Yggdrasil Room",
-    hint: "Seek the great ash tree whose roots and branches hold the nine worlds together.",
+    hint: "In the hall of the gods where the great roots grow,\n" +
+          "pale and white as the winter snow,\n" +
+          "where pictures dance and the colours shift,\n" +
+          "a rune lies hidden, a seeker's gift.\n" +
+          "Look high, look low, look left and right,\n" +
+          "search every corner, in every light.\n" +
+          "Among the roots, if your eyes are keen,\n" +
+          "the hail-rune ᚺ waits there, unseen.",
     text: "Right now you are standing in the mythology room. In this room you will see some huge white roots. On them there will be pictures, you will hear stories, and the room will shift colours. So please sit down and enjoy the videos.",
     audio: "audio/rune2.mp3",
     mapX: 74,
@@ -59,7 +66,14 @@ const RUNES = [
     id: 3,
     symbol: "ᛒ",
     room: "The Rune Stone Room",
-    hint: "Find the stone where a king wrote his own story. Look for the rune ᛒ.",
+    hint: "Where the kings' great stones stand proud and tall,\n" +
+          "their old words carved for the eyes of all,\n" +
+          "your quest is nearly done, brave soul:\n" +
+          "one rune stands between you and your goal.\n" +
+          "Walk slowly round and read stone by stone;\n" +
+          "the last rune waits for you alone.\n" +
+          "Seek out the birch-rune, ᛒ by name,\n" +
+          "then Harald's crown is yours to claim.",
     text: "You have just finished visiting the museum, and you have probably learned a lot about Harald, Gorm the Old and Queen Thyra. Gorm and Harald are the first in the royal line of Denmark's monarchy. Next, go outside to the monument area and see the two huge rune stones in front of the church. These are the stones that Gorm and Harald placed right here in the Viking Age.",
     audio: "audio/rune3.mp3",
     mapX: 42,
