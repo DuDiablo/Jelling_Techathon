@@ -21,10 +21,10 @@ Techathon 2026 · Kongernes Jelling, Denmark · Theme: *Connecting people, place
 ## The idea
 
 - **Problem:** Kongernes Jelling has very little written text and no audio guide. School classes rush through and skip rooms, especially the fire room and the Yggdrasil room.
-- **Runes as beacons:** 3D-printed rune copies with an ESP32 inside, placed in different rooms (ᚲ → ᚺ → ᛒ).
+- **Runes as beacons:** 3D-printed rune copies with an ESP32 inside, placed in different rooms (ᚠ → ᛒ → ᚼ).
 - **Audio guide:** the visitor's phone plays the story for that room.
 - **Game:** runes must be found in order. Each one unlocks the next.
-- **Finale:** Harald's runes ᚺ + ᛒ (carved ᚼ + ᛒ in his time) combine into the Bluetooth logo, named after Harald Bluetooth, who lived here.
+- **Finale:** Harald's runes ᚼ + ᛒ (H and B, found in rooms 3 and 2) combine into the Bluetooth logo, named after Harald Bluetooth, who lived here.
 
 ## How a visit works
 
@@ -139,9 +139,9 @@ Each rune gets one NFC sticker (NTAG213 or NTAG215) holding a **URL record**:
 
 | Tag | URL |
 |---|---|
-| Rune 1 ᚲ (Fire Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=1` |
-| Rune 2 ᚺ (Yggdrasil Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=2` |
-| Rune 3 ᛒ (Rune Stone Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=3` |
+| Rune 1 ᚠ (Fire Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=1` |
+| Rune 2 ᛒ (Yggdrasil Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=2` |
+| Rune 3 ᚼ (Rune Stone Room) | `https://dudiablo.github.io/Jelling_Techathon/?rune=3` |
 
 **Writing a tag** with the free **NFC Tools** app (Android or iPhone):
 1. **Write** → **Add a record** → **URL / URI**, paste the URL for that rune, then **OK**
