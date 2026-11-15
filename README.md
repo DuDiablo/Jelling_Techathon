@@ -65,6 +65,7 @@ Must match `firmware/rune/rune.ino`. Device names: `RUNE_1`, `RUNE_2`, `RUNE_3` 
 | Sounds (write) | `7a1e0012-5c1d-4b6a-9f2e-6a72756e6500` | phone writes one character |
 
 - **Controls:** `x` -1 left … 1 right, `y` -1 down … 1 up, `a` 1 = action pressed.
+- **In the game the axes are swapped** (the joystick is mounted turned): the controller's `y` steers the ship left / right and its `x` moves it forward / back. Change it in `docs/js/app.js` (`Controller.on("input", …)`).
 - **Sounds:** `"1"` click (coin), `"2"` win (landed at Jelling), `"3"` lose (bump).
 
 ## Run it locally
@@ -173,7 +174,7 @@ A longship game of about half a minute, the reward for finding all three runes. 
 - The clan's best gold is kept with the visit and printed on the **Ruler of the Runes** certificate.
 - If the page is hidden mid-voyage (a call, another app), the game pauses and shows "Ready…" for a moment when you come back.
 
-**Testing without the controller:** in the browser console, `HaraldJoystick(1, 0)` steers right, and `Controller._feed("0,1,1")` acts like the controller sending "forward + button".
+**Testing without the controller:** in the browser console, `HaraldJoystick(1, 0)` steers right, and `Controller._feed("1,0,1")` acts like the controller sending x = 1 (forward in the game, because the axes are swapped) + button.
 
 ## Test checklist (real hardware)
 
